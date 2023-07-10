@@ -42,6 +42,12 @@ def argumentParser(config: dict):
         with open('config.yaml', 'w') as f:
             f.write(content)
 
+        """
+        if using the command line argument we do not start
+        the service in order to be able to add more than one device.
+        """
+        exit(0)
+
     if len(devices) == 0:
         print("Warning no devices defined!")
         parser.print_help()

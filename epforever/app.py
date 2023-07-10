@@ -191,7 +191,7 @@ class EpforEverApp():
     def __init_db(self) -> bool:
         db_directory = self.config.get('db_folder')
         if not os.path.isdir(db_directory):
-            print("ERROR: could not find the db_folder check config.json")
+            print("ERROR: could not find the db_folder check config.yaml")
             return False
 
         self.db_name = datetime.today().strftime("%Y-%m-%d") + ".json"
@@ -222,13 +222,13 @@ class EpforEverApp():
     def __canrun(self) -> bool:
         if len(self.instruments) == 0:
             print(
-                "WARNING: No device configured. Edit the config.json file"
+                "WARNING: No device configured. Edit the config.yaml file"
             )
             return False
 
         if not self.__init_db():
             print(
-                "WARNING: Edit the config.json file, missing db_folder path"
+                "WARNING: Edit the config.yaml file, missing db_folder path"
             )
             return False
 
@@ -238,7 +238,7 @@ class EpforEverApp():
                 pass
         except OSError:
             print(
-                "WARNING: config.json, missing 'nightenv_path' file path"
+                "WARNING: config.yaml, missing 'nightenv_path' file path"
             )
             return False
 
