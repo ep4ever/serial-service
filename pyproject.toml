@@ -8,7 +8,7 @@ documentation = "https://www.ep4ever.com/#/documentation"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.7"
 tinydb = "^4.7"
 minimalmodbus = "^2"
 pyyaml = "^6.0"
