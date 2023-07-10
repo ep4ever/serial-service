@@ -211,11 +211,11 @@ class EpforEverApp():
             # default is 0.05 s
             instrument.serial.timeout = 1.2
         except SerialException as e:
-            "Device: {} connection error: {}".format(
+            print("Device: {} connection error: {}".format(
                 device,
                 e
-            )
-            return None
+            ))
+            exit(1)
 
         return [device.get('name'), instrument]
 
@@ -232,7 +232,7 @@ class EpforEverApp():
             )
             return False
 
-        nightenv_path = self.config.get('nightenv_filepath', None)
+        nightenv_path = self.config.get('nightenv_file', None)
         try:
             with open(nightenv_path, 'w'):
                 pass
