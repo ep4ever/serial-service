@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "epforever"
+version = "0.1.0"
+description = "Solar monitoring tool serial service"
+authors = ["ep4ever <victor@ep4ever.com>"]
+license = "Proprietary"
+documentation = "https://www.ep4ever.com/#/documentation"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+tinydb = "^4.7"
+minimalmodbus = "^2"
+
+[tool.poetry.scripts]
+serial_service = 'epforever.main:start'
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
