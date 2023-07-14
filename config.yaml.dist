@@ -1,3 +1,3 @@
-db_folder: dbfiles
-nightenv_file: .nightenv
+db_folder: ../dbfiles
+nightenv_file: ../.nightenv
 devices:

@@ -15,6 +15,8 @@ To do this you can use the command line interface like so:
 ```sh
 python ./serialservice.py --device-name=6420an --device-port=/dev/ttyXRUSB0
 ```
+(!) device name will be a key in the json database and you will need to added to the config.json::devices section
+of the application configuration file. (ex: devices: ["6420an"] in solar-station config.json file)
 
 > The service will not start if you provide those command line arguments
 
