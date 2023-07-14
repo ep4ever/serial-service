@@ -11,7 +11,7 @@ readme = "README.md"
 python = "^3.7"
 tinydb = "^4.7"
 minimalmodbus = "^2"
-pyyaml = "^6.0"
+python-dotenv = "^0.21.1"
 
 [tool.poetry.scripts]
 serial_service = 'epforever.main:start'

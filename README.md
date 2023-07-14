@@ -9,18 +9,29 @@ The data are then saved in a json database file in the dbfiles folder on a daily
 > /!\ Before you start, make sure you have installed the drivers to handle your device serial communication.
 > There will soon be a wiki page talking about how to handle this.
 
-You need to specify at least one device.
-To do this you can use the command line interface like so:
+You need to specify at least one device before starting the service.
+To do this edit the devices section of the main config.json file (cf. main project solar-station):
 
-```sh
-python ./serialservice.py --device-name=6420an --device-port=/dev/ttyXRUSB0
+** example: devices section of the main configuration file**
+```json
+"devices": [
+    {
+        "name": "6420an",
+        "port": "/dev/ttyXRUSB1"
+    },
+    {
+        "name": "3910bp",
+        "port": "/dev/ttyXRUSB0"
+    },
+    {
+        "name": "3210an",
+        "port": "/dev/ttyXRUSB1"
+    }
+],
 ```
-(!) device name will be a key in the json database and you will need to added to the config.json::devices section
-of the application configuration file. (ex: devices: ["6420an"] in solar-station config.json file)
 
-> The service will not start if you provide those command line arguments
-
-To start the service just use the same command with no argument.
+Then copy .env.dist to **.env** and update the path of the main configuration (config.json) path.
+Once done use:
 
 ```sh
 python ./serialservice.py
