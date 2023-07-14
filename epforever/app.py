@@ -232,7 +232,7 @@ class EpforEverApp():
             )
             return False
 
-        nightenv_path = self.config.get('nightenv_file', None)
+        nightenv_path = self.config.get('nightenv_filepath', None)
         try:
             with open(nightenv_path, 'w'):
                 pass

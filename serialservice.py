@@ -20,5 +20,5 @@ if __name__ == '__main__':
     config = json.load(f)
     f.close()
 
-    app = EpforEverApp(config=lconfig)
+    app = EpforEverApp(config=config)
     app.run()
