@@ -1,5 +1,6 @@
 import os
 import time
+import sys
 import threading
 from datetime import datetime
 from tinydb import TinyDB
@@ -215,7 +216,7 @@ class EpforEverApp():
                 device,
                 e
             ))
-            exit(1)
+            sys.exit(1)
 
         return [device.get('name'), instrument]
 
