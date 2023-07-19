@@ -82,7 +82,7 @@ class MariaDBAdapter(Adapter):
                 querydata.append((device_id, field_id, datestamp, value))
 
         self.cursor.executemany(
-            "INSERT INTO data(device_id, field_id, date, value) VALUES(%s, %s, %s, %s)",
+            "INSERT INTO data(device_id, field_id, date, value) VALUES(%s, %s, %s, %s)",  # noqa: E501
             querydata
         )
         self.connection.commit()
