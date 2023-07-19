@@ -1,5 +1,6 @@
 from epforever.adapter import Adapter
 import MySQLdb
+from ast import literal_eval
 
 
 class MariaDBAdapter(Adapter):
@@ -40,7 +41,7 @@ class MariaDBAdapter(Adapter):
                 register[keyval] = {
                     'id': field[0],
                     'kind': 'simple',
-                    'value': int(field[4], 16),
+                    'value': literal_eval(field[4]),
                     'fieldname': field[2]
                 }
             else:
@@ -48,8 +49,8 @@ class MariaDBAdapter(Adapter):
                 register[keyval] = {
                     'id': field[0],
                     'kind': 'lowhigh',
-                    'lsb': int(data[0], 16),
-                    'msb': int(data[1], 16),
+                    'lsb': literal_eval(data[0]),
+                    'msb': literal_eval(data[1]),
                     'fieldname': field[2]
                 }
             self.fieldDict[field[2]] = field[0]
