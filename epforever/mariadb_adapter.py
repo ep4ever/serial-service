@@ -3,44 +3,44 @@ import MySQLdb
 
 
 class MariaDBAdapter(Adapter):
-    def loadConfig(self):
-        config = {
-            'dbuser': self.config.get('DB_USER'),
-            'dbpwd': self.config.get('DB_PWD'),
-            'dbhost': self.config.get('DB_HOST'),
-            'dbname': self.config.get('DB_NAME'),
-            'devices': [],
-            'registers': {}
-        }
+    cursor: None
+    connection: None
+    deviceDict: None
+    fieldDict: None
 
-        connection = MySQLdb.connect(
+    def loadConfig(self):
+        self.deviceDict = dict()
+        self.fieldDict = dict()
+
+        cnx = MySQLdb.connect(
             user=self.config.get('DB_USER'),
             password=self.config.get('DB_PWD'),
             host=self.config.get('DB_HOST'),
             database=self.config.get('DB_NAME')
         )
-        cursor = connection.cursor()
+        cursor = cnx.cursor()
         cursor.execute('SELECT id, name, port FROM device')
         devices = cursor.fetchall()
         for device in devices:
-            config.get('devices').append({
+            self.devices.append({
                 'id': device[0],
                 'name': device[1],
                 'port': device[2]
             })
+            self.deviceDict[device[1]] = device[0]
 
         cursor.execute('''
             SELECT id, label, name, category, registeraddr FROM field
         ''')
         fields = cursor.fetchall()
-        register = config.get('registers')
+        register = {}
         for field in fields:
             keyval = field[1]
             if field[3] == 'simple':
                 register[keyval] = {
                     'id': field[0],
                     'kind': 'simple',
-                    'value': field[4],
+                    'value': int(field[4], 16),
                     'fieldname': field[2]
                 }
             else:
@@ -48,14 +48,40 @@ class MariaDBAdapter(Adapter):
                 register[keyval] = {
                     'id': field[0],
                     'kind': 'lowhigh',
-                    'lsb': data[0],
-                    'msb': data[1],
+                    'lsb': int(data[0], 16),
+                    'msb': int(data[1], 16),
                     'fieldname': field[2]
                 }
+            self.fieldDict[field[2]] = field[0]
+
         self.register = register
 
         cursor.close()
-        connection.close()
+        cnx.close()
 
     def init(self):
-        pass
+        self.connection = MySQLdb.connect(
+            user=self.config.get('DB_USER'),
+            password=self.config.get('DB_PWD'),
+            host=self.config.get('DB_HOST'),
+            database=self.config.get('DB_NAME')
+        )
+        self.cursor = self.connection.cursor()
+
+        return True
+
+    def saveRecord(self, record):
+        querydata = []
+        for r in record:
+            device_id = self.deviceDict[r.get('device')]
+            datestamp = "{} {}".format(r.get('datestamp'), r.get('timestamp'))
+            for data in r.get('data'):
+                field_id = self.fieldDict[data.get('field')]
+                value = data.get('value')
+                querydata.append((device_id, field_id, datestamp, value))
+
+        self.cursor.executemany(
+            "INSERT INTO data(device_id, field_id, date, value) VALUES(%s, %s, %s, %s)",
+            querydata
+        )
+        self.connection.commit()
