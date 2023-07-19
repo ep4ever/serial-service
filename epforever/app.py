@@ -2,25 +2,24 @@ import os
 import time
 import sys
 import threading
-from datetime import datetime
-from tinydb import TinyDB
+import tempfile
 from serial.serialutil import SerialException
 from minimalmodbus import Instrument
-from epforever.registers import epever
+from epforever.adapter import Adapter
 
 
 class EpforEverApp():
-    config: dict
+    adapter: Adapter
     instruments: list
     p_index: int
     proc_char: dict
     register: dict
     runnable: bool
-    db_name: str
     is_night_mode: bool
+    nightenv_filepath: str
 
-    def __init__(self, config: dict):
-        self.config = config
+    def __init__(self, adapter: Adapter):
+        self.adapter = adapter
         self.instruments = []
         self.p_index = 0
         self.proc_char = {
@@ -29,12 +28,19 @@ class EpforEverApp():
             2: "|",
             3: "/",
         }
-        for device in config.get('devices'):
+
+        self.nightenv_filepath = os.path.join(
+            tempfile.gettempdir(),
+            '.nightenv'
+        )
+        self.adapter.loadConfig()
+
+        for device in self.adapter.devices:
             print("creating instrument from devices {}".format(device))
             instrument = self.__create_instrument(device)
             if instrument is not None:
                 self.instruments.append(instrument)
-        self.register = epever
+        self.register = self.adapter.register
         self.runnable = self.__canrun()
         self.is_night_mode = False
 
@@ -46,9 +52,6 @@ class EpforEverApp():
             self.p_index = 0
 
         threading.Timer(15.0, self.run).start()
-
-        if self.db_name != datetime.today().strftime("%Y-%m-%d") + ".json":
-            self.__init_db()
 
         # get timestamps
         localtime = time.localtime()
@@ -140,12 +143,12 @@ class EpforEverApp():
         # remaining data if at least one of the devices ?
         if len(self.instruments) > len(offsun_batt_values):
             print("doing db insertion...")
-            self.db.insert_multiple(records)
+            self.adapter.saveRecord(records)
             self.p_index += 1
         elif not self.is_night_mode:
             # insert a last zero record
             print("doing last db insertion...")
-            self.db.insert_multiple(records)
+            self.adapter.saveRecord(records)
             self.p_index += 1
             self.is_night_mode = True
 
@@ -189,17 +192,6 @@ class EpforEverApp():
             ))
             return True
 
-    def __init_db(self) -> bool:
-        db_directory = self.config.get('db_folder')
-        if not os.path.isdir(db_directory):
-            print("ERROR: could not find the db_folder check config.yaml")
-            return False
-
-        self.db_name = datetime.today().strftime("%Y-%m-%d") + ".json"
-        db_path = os.path.join(db_directory, self.db_name)
-        self.db = TinyDB(db_path)
-        return True
-
     def __create_instrument(self, device: dict):
         instrument = None
         try:
@@ -227,28 +219,27 @@ class EpforEverApp():
             )
             return False
 
-        if not self.__init_db():
+        if not self.adapter.init():
             print(
-                "WARNING: Edit the config.yaml file, missing db_folder path"
+                "WARNING: could not initialize adapter"
             )
             return False
 
-        nightenv_path = self.config.get('nightenv_filepath', None)
         try:
-            with open(nightenv_path, 'w'):
+            with open(self.nightenv_filepath, 'w'):
                 pass
         except OSError:
             print(
-                "WARNING: config.yaml, missing 'nightenv_path' file path"
+                "WARNING: could not write to file path {}".format(
+                    self.nightenv_filepath
+                )
             )
             return False
 
         return True
 
     def __fillOffSunEnv(self, offsun_batt_values: list):
-        nightenv_path = self.config.get('nightenv_filepath')
-
-        with open(nightenv_path, "w") as f:
+        with open(self.nightenv_filepath, "w") as f:
             lines = []
             for batt_values in offsun_batt_values:
                 lines.append(
