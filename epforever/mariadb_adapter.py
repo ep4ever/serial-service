@@ -8,10 +8,12 @@ class MariaDBAdapter(Adapter):
     connection: None
     deviceDict: None
     fieldDict: None
+    dashboardDict: None
 
     def loadConfig(self):
         self.deviceDict = dict()
         self.fieldDict = dict()
+        self.dashboardDict = dict()
 
         cnx = MySQLdb.connect(
             user=self.config.get('DB_USER'),
@@ -57,6 +59,11 @@ class MariaDBAdapter(Adapter):
 
         self.register = register
 
+        cursor.execute('SELECT DISTINCT identifier, field_id FROM dashboard')
+        items = cursor.fetchall()
+        for item in items:
+            self.dashboardDict[item[1]] = item[0]
+
         cursor.close()
         cnx.close()
 
@@ -80,12 +87,47 @@ class MariaDBAdapter(Adapter):
                 field_id = self.fieldDict[data.get('field')]
                 value = data.get('value')
                 querydata.append((device_id, field_id, datestamp, value))
+                if field_id in self.dashboardDict:
+                    self.cursor.execute(
+                        """
+                        UPDATE dashboard
+                        SET value = %s
+                        WHERE identifier = %s
+                        AND field_id = %s
+                        AND device_id = %s
+                        """,
+                        (
+                            value,
+                            self.dashboardDict[field_id],
+                            field_id,
+                            device_id
+                        )
+                    )
 
         self.cursor.executemany(
-            "INSERT INTO data(device_id, field_id, date, value) VALUES(%s, %s, %s, %s)",  # noqa: E501
+            """
+            INSERT INTO data(device_id, field_id, date, value)
+            VALUES(%s, %s, %s, %s)
+            """,
             querydata
         )
         self.connection.commit()
 
     def saveOffSun(self, values):
-        pass
+        self.cursor = self.connection.cursor()
+        # we only have battery voltage actually
+        for el in values:
+            device_id = self.deviceDict[el.get('device')]
+            value = el.get('value')
+            self.cursor.execute(
+                """
+                UPDATE dashboard
+                SET value = %s
+                WHERE identifier = 'batt_voltage'
+                AND device_id = %s
+                """,
+                (
+                    value,
+                    device_id
+                )
+            )
