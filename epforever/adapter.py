@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 class Adapter(ABC):
     config: dict
-    devices: []
+    devices: list[dict]
     register: dict
 
     def __init__(self, config: dict):
@@ -21,3 +21,7 @@ class Adapter(ABC):
     @abstractmethod
     def saveRecord(self, record):
         raise NotImplementedError("saveRecord method must be overrided")
+
+    @abstractmethod
+    def saveOffSun(self, values):
+        raise NotImplementedError("saveOffSun method must be overrided")

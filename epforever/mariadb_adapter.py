@@ -86,3 +86,6 @@ class MariaDBAdapter(Adapter):
             querydata
         )
         self.connection.commit()
+
+    def saveOffSun(self, values):
+        pass

@@ -1,8 +1,6 @@
-import os
 import time
 import sys
 import threading
-import tempfile
 from serial.serialutil import SerialException
 from minimalmodbus import Instrument
 from epforever.adapter import Adapter
@@ -29,10 +27,6 @@ class EpforEverApp():
             3: "/",
         }
 
-        self.nightenv_filepath = os.path.join(
-            tempfile.gettempdir(),
-            '.nightenv'
-        )
         self.adapter.loadConfig()
 
         for device in self.adapter.devices:
@@ -110,7 +104,7 @@ class EpforEverApp():
         # if there is no data available for all devices
         if len(offsun_batt_values) == len(self.instruments):
             # we are in night mode
-            self.__fillOffSunEnv(offsun_batt_values)
+            self.adapter.saveOffSun(offsun_batt_values)
             if not self.is_night_mode:
                 for device in devices_with_out_data:
                     record = {
@@ -225,29 +219,4 @@ class EpforEverApp():
             )
             return False
 
-        try:
-            with open(self.nightenv_filepath, 'w'):
-                pass
-        except OSError:
-            print(
-                "WARNING: could not write to file path {}".format(
-                    self.nightenv_filepath
-                )
-            )
-            return False
-
         return True
-
-    def __fillOffSunEnv(self, offsun_batt_values: list):
-        with open(self.nightenv_filepath, "w") as f:
-            lines = []
-            for batt_values in offsun_batt_values:
-                lines.append(
-                    "{}={}\n".format(
-                        batt_values.get('device'),
-                        batt_values.get('value')
-                    )
-                )
-
-            f.writelines(lines)
-            f.close()

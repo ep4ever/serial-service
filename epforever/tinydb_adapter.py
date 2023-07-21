@@ -1,5 +1,6 @@
 import os
 import json
+import tempfile
 from datetime import datetime
 from tinydb import TinyDB
 
@@ -11,6 +12,7 @@ from epforever.registers import epever
 class TinyDBAdapter(Adapter):
     envConfig: dict
     db_name: str
+    nightenv_filepath: str
 
     def loadConfig(self):
         lconfig = self.config.get('MAIN_CONFIG_PATH')
@@ -34,6 +36,11 @@ class TinyDBAdapter(Adapter):
 
         f.close()
 
+        self.nightenv_filepath = os.path.join(
+            tempfile.gettempdir(),
+            '.nightenv'
+        )
+
     def init(self):
         db_directory = self.envConfig.get('db_folder')
         if not os.path.isdir(db_directory):
@@ -43,6 +50,18 @@ class TinyDBAdapter(Adapter):
         self.db_name = datetime.today().strftime("%Y-%m-%d") + ".json"
         db_path = os.path.join(db_directory, self.db_name)
         self.db = TinyDB(db_path)
+
+        try:
+            with open(self.nightenv_filepath, 'w'):
+                pass
+        except OSError:
+            print(
+                "WARNING: could not write to file path {}".format(
+                    self.nightenv_filepath
+                )
+            )
+            return False
+
         return True
 
     def saveRecord(self, record):
@@ -50,3 +69,17 @@ class TinyDBAdapter(Adapter):
             self.init()
 
         self.db.insert_multiple(record)
+
+    def saveOffSun(self, values):
+        with open(self.nightenv_filepath, "w") as f:
+            lines = []
+            for batt_values in values:
+                lines.append(
+                    "{}={}\n".format(
+                        batt_values.get('device'),
+                        batt_values.get('value')
+                    )
+                )
+
+            f.writelines(lines)
+            f.close()
