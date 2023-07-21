@@ -134,3 +134,5 @@ class MariaDBAdapter(Adapter):
                     device_id
                 )
             )
+
+        self.connection.commit()
