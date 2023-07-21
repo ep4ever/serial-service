@@ -114,7 +114,6 @@ class MariaDBAdapter(Adapter):
         self.connection.commit()
 
     def saveOffSun(self, values):
-        self.cursor = self.connection.cursor()
         # we only have battery voltage actually
         for el in values:
             device_id = self.deviceDict[el.get('device')]
@@ -124,6 +123,10 @@ class MariaDBAdapter(Adapter):
                 UPDATE dashboard
                 SET value = %s
                 WHERE identifier = 'batt_voltage'
+                AND field_id = (
+                    SELECT id FROM field
+                    where name = 'battery_voltage'
+                )
                 AND device_id = %s
                 """,
                 (
