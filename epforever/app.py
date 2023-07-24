@@ -170,7 +170,7 @@ class EpforEverApp():
                     "value": "{:.2f}".format(serialvalue)
                 })
 
-    def ____fillOffSunRecord(self, record: dict, device: list):
+    def __fillOffSunRecord(self, record: dict, device: list):
         for key, item in self.register.items():
             serialvalue = None
 
