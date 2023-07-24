@@ -23,5 +23,5 @@ class Adapter(ABC):
         raise NotImplementedError("saveRecord method must be overrided")
 
     @abstractmethod
-    def saveOffSun(self, values):
+    def saveOffSun(self, record):
         raise NotImplementedError("saveOffSun method must be overrided")

@@ -58,25 +58,23 @@ class EpforEverApp():
 
         # for each device (first iteration)
         for device in self.instruments:
-            if self.__isnight(device):
-                h = self.register.get('battery_rated_voltage').get('value')
+            if self.__nopower(device):
                 print(f"no data available on this device {device[0]}")
 
-                serialvalue = None
+                record = {
+                    "device": device[0],
+                    "timestamp": timestamp,
+                    "datestamp": datestamp,
+                    "data": []
+                }
                 try:
-                    serialvalue = device[1].read_register(h, 2, 4)
+                    self.__fillOffSunRecord(record, device)
+                    offsun_batt_values.append(record)
                 except Exception as e:
-                    # add a zero value (not taken into account on client side)
-                    serialvalue = 0
-                    print("Error reading voltage, device {}, error {}".format(
+                    print("Error on device {}, error {}".format(
                         device[0],
                         e
                     ))
-
-                offsun_batt_values.append({
-                    "device": device[0],
-                    "value": serialvalue
-                })
 
                 # save this device for later use
                 devices_with_out_data.append(device)
@@ -97,6 +95,7 @@ class EpforEverApp():
                         device[0],
                         e
                     ))
+                    # could not get data: ensure empty value
                     devices_with_out_data.append(device)
 
         # end foreach device
@@ -171,7 +170,29 @@ class EpforEverApp():
                     "value": "{:.2f}".format(serialvalue)
                 })
 
-    def __isnight(self, device: list) -> bool:
+    def ____fillOffSunRecord(self, record: dict, device: list):
+        for key, item in self.register.items():
+            serialvalue = None
+
+            if item.get('type') == 'counter':
+                continue
+
+            if item.get('kind') == 'simple':
+                serialvalue = device[1].read_register(
+                    item.get('value'), 2, 4
+                )
+            if item.get('kind') == 'lowhigh':
+                lsb = device[1].read_register(item.get('lsb'), 2, 4)
+                msb = device[1].read_register(item.get('msb'), 2, 4)
+                serialvalue = lsb + (msb << 8)
+
+            if serialvalue is not None:
+                record.get("data").append({
+                    "field": item.get('fieldname'),
+                    "value": "{:.2f}".format(serialvalue)
+                })
+
+    def __nopower(self, device: list) -> bool:
         # discrete value for day / night always return zero
         # so if pv_array_input_current is zero
         # the device does not produce anymore
@@ -180,7 +201,7 @@ class EpforEverApp():
             value = device[1].read_register(h, 2, 4)
             return (value < 0.01)
         except Exception as e:
-            print("__isnight::Error on device {}. Error: {}".format(
+            print("__nopower::Error on device {}. Error: {}".format(
                 device[0],
                 e
             ))

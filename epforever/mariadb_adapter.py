@@ -78,7 +78,7 @@ class MariaDBAdapter(Adapter):
 
         return True
 
-    def saveRecord(self, record):
+    def saveRecord(self, record, onlyDashBoard: bool = False):
         querydata = []
         for r in record:
             device_id = self.deviceDict[r.get('device')]
@@ -104,35 +104,16 @@ class MariaDBAdapter(Adapter):
                         )
                     )
 
-        self.cursor.executemany(
-            """
-            INSERT INTO data(device_id, field_id, date, value)
-            VALUES(%s, %s, %s, %s)
-            """,
-            querydata
-        )
-        self.connection.commit()
-
-    def saveOffSun(self, values):
-        # we only have battery voltage actually
-        for el in values:
-            device_id = self.deviceDict[el.get('device')]
-            value = el.get('value')
-            self.cursor.execute(
+        if not onlyDashBoard:
+            self.cursor.executemany(
                 """
-                UPDATE dashboard
-                SET value = %s
-                WHERE identifier = 'batt_voltage'
-                AND field_id = (
-                    SELECT id FROM field
-                    where name = 'battery_voltage'
-                )
-                AND device_id = %s
+                INSERT INTO data(device_id, field_id, date, value)
+                VALUES(%s, %s, %s, %s)
                 """,
-                (
-                    value,
-                    device_id
-                )
+                querydata
             )
 
         self.connection.commit()
+
+    def saveOffSun(self, record):
+        self.saveRecord(record, True)

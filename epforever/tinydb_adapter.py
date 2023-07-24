@@ -70,16 +70,19 @@ class TinyDBAdapter(Adapter):
 
         self.db.insert_multiple(record)
 
-    def saveOffSun(self, values):
-        with open(self.nightenv_filepath, "w") as f:
-            lines = []
-            for batt_values in values:
-                lines.append(
-                    "{}={}\n".format(
-                        batt_values.get('device'),
-                        batt_values.get('value')
-                    )
-                )
-
-            f.writelines(lines)
-            f.close()
+    def saveOffSun(self, record):
+        pass
+        # TODO: get only battery voltage from record and save it
+        # in flat file
+        # with open(self.nightenv_filepath, "w") as f:
+        #     lines = []
+        #     for batt_values in values:
+        #         lines.append(
+        #             "{}={}\n".format(
+        #                 batt_values.get('device'),
+        #                 batt_values.get('value')
+        #             )
+        #         )
+        #
+        #     f.writelines(lines)
+        #     f.close()
