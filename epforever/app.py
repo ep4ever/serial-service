@@ -14,6 +14,7 @@ class EpforEverApp():
 
     def __init__(self, adapter: Adapter):
         self.adapter = adapter
+        self.devices = list()
         self.p_index = 0
         self.proc_char = {
             0: "-",
@@ -29,7 +30,8 @@ class EpforEverApp():
             try:
                 comDevice = Device(deviceDef, self.adapter.register)
                 self.devices.append(comDevice)
-            except Exception:
+            except Exception as e:
+                print("error {}".format(e))
                 sys.exit(1)
 
         self.runnable = self.__canrun()
@@ -38,10 +40,10 @@ class EpforEverApp():
         if not self.runnable:
             return
 
+        threading.Timer(15.0, self.run).start()
+
         if (self.p_index > 3):
             self.p_index = 0
-
-        threading.Timer(15.0, self.run).start()
 
         # get timestamps
         localtime = time.localtime()
@@ -67,10 +69,10 @@ class EpforEverApp():
         else:
             print("saving (power data)...")
             self.adapter.saveRecord(records)
-            self.p_index += 1
 
         print(f"{self.proc_char[self.p_index]}", end="")
         print("\r", end="")
+        self.p_index += 1
 
     def __canrun(self) -> bool:
         if len(self.devices) == 0:
