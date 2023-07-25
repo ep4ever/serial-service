@@ -19,9 +19,5 @@ class Adapter(ABC):
         raise NotImplementedError("init method must be overrided")
 
     @abstractmethod
-    def saveRecord(self, record):
+    def saveRecord(self, record: dict, off: bool = False):
         raise NotImplementedError("saveRecord method must be overrided")
-
-    @abstractmethod
-    def saveOffSun(self, record):
-        raise NotImplementedError("saveOffSun method must be overrided")

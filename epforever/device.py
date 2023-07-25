@@ -33,20 +33,20 @@ class Device:
         if self.device_has_power:
             # still input current comming from this device
             try:
-                self.fillrecord(record)
+                self.__fillrecord(record)
             except Exception as e:
                 print("Error on device {}, error {}".format(
                     self.name,
                     e
                 ))
                 self.device_has_error = True
-                self.fillrecord(
+                self.__fillrecord(
                     record=record,
                     empty=True
                 )
         else:
             try:
-                self.fillrecord(
+                self.__fillrecord(
                     record=record,
                     withcounter=False
                 )
@@ -56,13 +56,13 @@ class Device:
                     e
                 ))
                 self.device_has_error = True
-                self.fillrecord(
+                self.__fillrecord(
                     record=record,
                     empty=True,
                     withcounter=False
                 )
 
-    def fillrecord(
+    def __fillrecord(
         self,
         record: dict,
         empty: bool = False,

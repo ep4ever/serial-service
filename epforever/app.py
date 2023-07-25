@@ -51,7 +51,7 @@ class EpforEverApp():
         datestamp = time.strftime("%Y-%m-%d", localtime)
 
         records = []
-        nopower_count = 0
+        nboff = 0
 
         # for each device
         for device in self.devices:
@@ -59,16 +59,13 @@ class EpforEverApp():
             device.fill(record)
             records.append(record)
             if not device.has_power():
-                nopower_count = nopower_count + 1
+                nboff = nboff + 1
 
-        # if there is no data available for all devices
-        if nopower_count == len(self.devices):
-            print("saving (no power data)...")
-            # we are in night mode
-            self.adapter.saveOffSun(records)
-        else:
-            print("saving (power data)...")
-            self.adapter.saveRecord(records)
+        alloff = nboff == len(self.devices)
+        self.adapter.saveRecord(
+            record=records,
+            off=alloff
+        )
 
         print(f"{self.proc_char[self.p_index]}", end="")
         print("\r", end="")

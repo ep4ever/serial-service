@@ -9,7 +9,7 @@ class MariaDBAdapter(Adapter):
     deviceDict: None
     fieldDict: None
     dashboardDict: None
-    offsun_mode: bool = False
+    isoff: bool = False
 
     def loadConfig(self):
         self.deviceDict = dict()
@@ -79,18 +79,18 @@ class MariaDBAdapter(Adapter):
 
         return True
 
-    def saveRecord(self, record, onlyDashBoard: bool = False):
+    def saveRecord(self, record: dict, off: bool = False):
         querydata = []
 
-        # if onlyDashBoard (called from saveOffSun) and
-        # offsun_mode flag is False
-        if onlyDashBoard and not self.offsun_mode:
-            self.__addEmptyRecord()
-            self.offsun_mode = True
-
-        if not onlyDashBoard:
-            # call saveRecord has been made outside of this object (app)
-            self.offsun_mode = False
+        if not off:
+            print("saving ...")
+            self.isoff = False
+        else:
+            print("saving (all devices are off) ...")
+            if not self.isoff:
+                # unsure last is an empty record
+                self.__addEmptyRecord()
+                self.isoff = True
 
         for r in record:
             device_id = self.deviceDict[r.get('device')]
@@ -116,7 +116,7 @@ class MariaDBAdapter(Adapter):
                         )
                     )
 
-        if not onlyDashBoard:
+        if not off:
             self.cursor.executemany(
                 """
                 INSERT INTO data(device_id, field_id, date, value)
@@ -126,9 +126,6 @@ class MariaDBAdapter(Adapter):
             )
 
         self.connection.commit()
-
-    def saveOffSun(self, record):
-        self.saveRecord(record, True)
 
     def __addEmptyRecord(self):
         querydata = []
