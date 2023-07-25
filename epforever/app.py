@@ -11,7 +11,6 @@ class EpforEverApp():
     p_index: int
     proc_char: dict
     runnable: bool
-    nightenv_filepath: str
 
     def __init__(self, adapter: Adapter):
         self.adapter = adapter
@@ -62,11 +61,11 @@ class EpforEverApp():
 
         # if there is no data available for all devices
         if nopower_count == len(self.devices):
-            print("saving off sun values...")
+            print("saving (no power data)...")
             # we are in night mode
             self.adapter.saveOffSun(records)
         else:
-            print("doing db insertion...")
+            print("saving (power data)...")
             self.adapter.saveRecord(records)
             self.p_index += 1
 
