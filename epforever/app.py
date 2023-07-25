@@ -57,8 +57,6 @@ class EpforEverApp():
         # for each device (first iteration)
         for device in self.instruments:
             if self.__nopower(device):
-                print(f"no data available on this device {device[0]}")
-
                 record = {
                     "device": device[0],
                     "timestamp": timestamp,
@@ -67,13 +65,14 @@ class EpforEverApp():
                 }
                 try:
                     self.__fillOffSunRecord(record, device)
-                    offsun_records.append(record)
                 except Exception as e:
                     print("Error on device {}, error {}".format(
                         device[0],
                         e
                     ))
+                    self.__fillOffSunRecord(record, device, True)
 
+                offsun_records.append(record)
                 devices_with_no_data.append(device)
             else:
                 # still input current comming from this device
@@ -98,6 +97,7 @@ class EpforEverApp():
 
         # if there is no data available for all devices
         if len(offsun_records) == len(self.instruments):
+            print("saving off sun values...")
             # we are in night mode
             self.adapter.saveOffSun(offsun_records)
         else:
@@ -148,11 +148,22 @@ class EpforEverApp():
                     "value": "{:.2f}".format(serialvalue)
                 })
 
-    def __fillOffSunRecord(self, record: dict, device: list):
+    def __fillOffSunRecord(
+        self, record: dict,
+        device: list,
+        empty: bool = False
+    ):
         for key, item in self.register.items():
             serialvalue = None
 
             if item.get('type') == 'counter':
+                continue
+
+            if empty:
+                record.get("data").append({
+                    "field": item.get('fieldname'),
+                    "value": "0"
+                })
                 continue
 
             if item.get('kind') == 'simple':
