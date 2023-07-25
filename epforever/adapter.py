@@ -5,10 +5,12 @@ class Adapter(ABC):
     config: dict
     devices: list[dict]
     register: dict
+    isoff: bool
 
     def __init__(self, config: dict):
         self.config = config
         self.devices = []
+        self.isoff = True
 
     @abstractmethod
     def loadConfig(self):

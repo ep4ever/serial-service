@@ -1,5 +1,6 @@
 import os
 import json
+import time
 import tempfile
 from datetime import datetime
 from tinydb import TinyDB
@@ -64,25 +65,50 @@ class TinyDBAdapter(Adapter):
 
         return True
 
-    def saveRecord(self, record):
-        if self.db_name != datetime.today().strftime("%Y-%m-%d") + ".json":
-            self.init()
+    def saveRecord(self, record: dict, off: bool = False):
+        if not off:
+            if self.db_name != datetime.today().strftime("%Y-%m-%d") + ".json":
+                self.init()
 
-        self.db.insert_multiple(record)
+            self.db.insert_multiple(record)
+        else:
+            if not self.isoff:
+                print("saving last empty record ...")
+                self.__addEmptyRecord()
+                self.isoff = True
 
-    def saveOffSun(self, record):
-        pass
-        # TODO: get only battery voltage from record and save it
-        # in flat file
-        # with open(self.nightenv_filepath, "w") as f:
-        #     lines = []
-        #     for batt_values in values:
-        #         lines.append(
-        #             "{}={}\n".format(
-        #                 batt_values.get('device'),
-        #                 batt_values.get('value')
-        #             )
-        #         )
-        #
-        #     f.writelines(lines)
-        #     f.close()
+            with open(self.nightenv_filepath, "w") as f:
+                lines = []
+                for r in record:
+                    key = r.get('device')
+                    for data in r.get('data'):
+                        key = r.get('device').join('_').join(data.get('field'))
+                        val = data.get('value')
+                        lines.append("{}={}\n".format(key, val))
+
+                f.writelines(lines)
+                f.close()
+
+    def __addEmptyRecord(self):
+        localtime = time.localtime()
+        timestamp = time.strftime("%H:%M:%S", localtime)
+        datestamp = time.strftime("%Y-%m-%d", localtime)
+        records = []
+        for device in self.envConfig.get('devices'):
+            record = {
+                "device": device.get('name'),
+                "timestamp": timestamp,
+                "datestamp": datestamp,
+                "data": []
+            }
+            for r in self.register:
+                if r.get('fieldname') is None:
+                    continue
+
+                record.get('data').append({
+                    'fieldname': r.get('fieldname'),
+                    'value': 0
+                })
+                records.append(record)
+
+        self.db.insert_multiple(records)

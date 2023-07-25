@@ -9,7 +9,6 @@ class MariaDBAdapter(Adapter):
     deviceDict: None
     fieldDict: None
     dashboardDict: None
-    isoff: bool = False
 
     def loadConfig(self):
         self.deviceDict = dict()
