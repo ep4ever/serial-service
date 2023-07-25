@@ -80,11 +80,15 @@ class TinyDBAdapter(Adapter):
             with open(self.nightenv_filepath, "w") as f:
                 lines = []
                 for r in record:
-                    key = r.get('device')
+                    device = r.get('device')
                     for data in r.get('data'):
-                        key = r.get('device').join('_').join(data.get('field'))
-                        val = data.get('value')
-                        lines.append("{}={}\n".format(key, val))
+                        field = data.get('field')
+                        value = data.get('value')
+                        if field is None or value is None or device is None:
+                            continue
+
+                        line = '_'.join([device, field])
+                        lines.append("{}={}\n".format(line, value))
 
                 f.writelines(lines)
                 f.close()
