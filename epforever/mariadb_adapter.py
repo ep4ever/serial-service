@@ -9,6 +9,7 @@ class MariaDBAdapter(Adapter):
     deviceDict: None
     fieldDict: None
     dashboardDict: None
+    offsun_mode: bool = False
 
     def loadConfig(self):
         self.deviceDict = dict()
@@ -80,6 +81,17 @@ class MariaDBAdapter(Adapter):
 
     def saveRecord(self, record, onlyDashBoard: bool = False):
         querydata = []
+
+        # if onlyDashBoard (called from saveOffSun) and
+        # offsun_mode flag is False
+        if onlyDashBoard and not self.offsun_mode:
+            self.__addEmptyRecord()
+            self.offsun_mode = True
+
+        if not onlyDashBoard:
+            # call saveRecord has been made outside of this object (app)
+            self.offsun_mode = False
+
         for r in record:
             device_id = self.deviceDict[r.get('device')]
             datestamp = "{} {}".format(r.get('datestamp'), r.get('timestamp'))
@@ -117,3 +129,21 @@ class MariaDBAdapter(Adapter):
 
     def saveOffSun(self, record):
         self.saveRecord(record, True)
+
+    def __addEmptyRecord(self):
+        querydata = []
+
+        for device in self.deviceDict:
+            for field in self.fieldDict:
+                device_id = self.deviceDict[device]
+                field_id = self.fieldDict[field]
+                querydata.append((device_id, field_id, 0))
+
+        self.cursor.executemany(
+            """
+            INSERT INTO data(device_id, field_id, date, value)
+            VALUES(%s, %s, NOW(), %s)
+            """,
+            querydata
+        )
+        self.connection.commit()
