@@ -88,7 +88,7 @@ class MariaDBAdapter(Adapter):
         else:
             print("saving (all devices are off) ...")
             if not self.isoff:
-                # unsure last is an empty record
+                print("saving last empty record ...")
                 self.__addEmptyRecord()
                 self.isoff = True
 
