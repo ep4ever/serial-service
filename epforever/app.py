@@ -53,7 +53,7 @@ class EpforEverApp():
         datestamp = time.strftime("%Y-%m-%d", localtime)
 
         offsun_batt_values = []
-        devices_with_out_data = []
+        # devices_with_out_data = []
         records = []
 
         # for each device (first iteration)
@@ -77,7 +77,7 @@ class EpforEverApp():
                     ))
 
                 # save this device for later use
-                devices_with_out_data.append(device)
+                # devices_with_out_data.append(device)
             else:
                 # still input current comming from the device
                 record = {
@@ -96,54 +96,57 @@ class EpforEverApp():
                         e
                     ))
                     # could not get data: ensure empty value
-                    devices_with_out_data.append(device)
+                    # devices_with_out_data.append(device)
 
         # end foreach device
 
         # if there is no data available for all devices
         if len(offsun_batt_values) == len(self.instruments):
+            print("there is no data for all instruments")
             # we are in night mode
             self.adapter.saveOffSun(offsun_batt_values)
-            if not self.is_night_mode:
-                for device in devices_with_out_data:
-                    record = {
-                        "device": device[0],
-                        "timestamp": timestamp,
-                        "datestamp": datestamp,
-                        "data": []
-                    }
-                    self.__fillrecord(record, device, True)
-                    records.append(record)
+            # if not self.is_night_mode:
+            #     for device in devices_with_out_data:
+            #         record = {
+            #             "device": device[0],
+            #             "timestamp": timestamp,
+            #             "datestamp": datestamp,
+            #             "data": []
+            #         }
+            #         self.__fillrecord(record, device, True)
+            #         records.append(record)
         else:
+            pass
             # at least one of the device has data.
             # for each device without data or with com error
             # we add an empty record
             # so that all devices stays on the same timeline
-            self.is_night_mode = False
-            for device in devices_with_out_data:
-                record = {
-                    "device": device[0],
-                    "timestamp": timestamp,
-                    "datestamp": datestamp,
-                    "data": []
-                }
-                self.__fillrecord(record, device, True)
-                records.append(record)
+            # self.is_night_mode = False
+            # for device in devices_with_out_data:
+            #     record = {
+            #         "device": device[0],
+            #         "timestamp": timestamp,
+            #         "datestamp": datestamp,
+            #         "data": []
+            #     }
+            #     self.__fillrecord(record, device, True)
+            #     records.append(record)
 
         print(f"{self.proc_char[self.p_index]}", end="")
         print("\r", end="")
 
         # remaining data if at least one of the devices ?
-        if len(self.instruments) > len(offsun_batt_values):
+        if len(records) > 0:
             print("doing db insertion...")
             self.adapter.saveRecord(records)
             self.p_index += 1
         elif not self.is_night_mode:
+            pass
             # insert a last zero record
-            print("doing last db insertion...")
-            self.adapter.saveRecord(records)
-            self.p_index += 1
-            self.is_night_mode = True
+            # print("doing last db insertion...")
+            # self.adapter.saveRecord(records)
+            # self.p_index += 1
+            # self.is_night_mode = True
 
     def __fillrecord(
         self, record: dict,
