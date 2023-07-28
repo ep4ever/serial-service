@@ -53,37 +53,47 @@ SELECT
 FROM
 	prod_wh
 
--- month amount (€) stat
-with average as(
-select
-	avg(z.value) * CAST((unixepoch(max(z.date)) - unixepoch(min(z.date))) as REAL) / CAST(3600 as REAL) as wh
-from
-	data z
-join device d on
-	d.id = z.device_id
-join field f on
-	f.id = z.field_id
-where
-	f.name = 'rated_watt'
-	and strftime('%Y', z.date) = strftime('%Y', DATE('now'))
-group by
-	d.name
-order by
-	strftime('%m', z.date) DESC,
-	d.name
+-- cumul money saved (€) stat
+WITH avg_watt_by_devices AS (
+	WITH rated_watt AS (
+		SELECT
+			d.name AS device,
+			z.value,
+			z.date as dates
+		FROM
+			data z
+		JOIN device d ON
+			d.id = z.device_id
+		JOIN field f ON
+			f.id = z.field_id
+		WHERE
+			f.name = 'rated_watt'
+	)
+	SELECT
+		rw.device,
+		AVG(rw.value) AS avg_watt,
+		(
+			CAST((unixepoch(MAX(rw.dates)) - unixepoch(MIN(rw.dates))) AS REAL) /
+			CAST(3600 AS REAL)
+		) AS elapsed,
+		(
+			(
+				CAST((unixepoch(max(rw.dates)) - unixepoch(min(rw.dates))) AS REAL) /
+				CAST(3600 AS REAL)
+			) * AVG(rw.value)
+		) AS watt_hour,
+		MIN(rw.dates) started_at,
+		MAX(rw.dates) ended_at
+	FROM
+		rated_watt AS rw
+	GROUP BY
+		DATE(rw.dates),
+		rw.device
 )
-select
-	ROUND(
-	CAST(
-		sum(wh) as REAL
-	) /
-	CAST(
-		1000 as REAL
-	) * 0.2,
-	2
-) || ' €'
-from
-	average;
+SELECT
+	SUM(watt_hour)/ 1000 * 0.2 AS value
+FROM
+	avg_watt_by_devices;
 
 -- temperature stat
 select
