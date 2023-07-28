@@ -10,20 +10,24 @@ class MariaDBAdapter(Adapter):
     fieldDict: None
     dashboardDict: None
 
+    def __init__(self, config: dict):
+        super().__init__(config)
+
+        self.cursor = None
+        self.connection = None
+        self.deviceDict = None
+        self.fieldDict = None
+        self.dashboardDict = None
+
     def loadConfig(self):
         self.deviceDict = dict()
         self.fieldDict = dict()
         self.dashboardDict = dict()
 
-        cnx = MySQLdb.connect(
-            user=self.config.get('DB_USER'),
-            password=self.config.get('DB_PWD'),
-            host=self.config.get('DB_HOST'),
-            database=self.config.get('DB_NAME')
-        )
-        cursor = cnx.cursor()
-        cursor.execute('SELECT id, name, port FROM device')
-        devices = cursor.fetchall()
+        self.init()
+
+        self.cursor.execute('SELECT id, name, port FROM device')
+        devices = self.cursor.fetchall()
         for device in devices:
             self.devices.append({
                 'id': device[0],
@@ -32,10 +36,10 @@ class MariaDBAdapter(Adapter):
             })
             self.deviceDict[device[1]] = device[0]
 
-        cursor.execute('''
+        self.cursor.execute('''
             SELECT id, label, name, category, registeraddr FROM field
         ''')
-        fields = cursor.fetchall()
+        fields = self.cursor.fetchall()
         register = {}
         for field in fields:
             keyval = field[1]
@@ -59,15 +63,17 @@ class MariaDBAdapter(Adapter):
 
         self.register = register
 
-        cursor.execute('SELECT DISTINCT identifier, field_id FROM dashboard')
-        items = cursor.fetchall()
+        self.cursor.execute(
+            'SELECT DISTINCT identifier, field_id FROM dashboard'
+        )
+        items = self.cursor.fetchall()
         for item in items:
             self.dashboardDict[item[1]] = item[0]
 
-        cursor.close()
-        cnx.close()
-
     def init(self):
+        if self.connection is not None:
+            return True
+
         self.connection = MySQLdb.connect(
             user=self.config.get('DB_USER'),
             password=self.config.get('DB_PWD'),
@@ -100,13 +106,7 @@ class MariaDBAdapter(Adapter):
                 querydata.append((device_id, field_id, datestamp, value))
                 if field_id in self.dashboardDict:
                     self.cursor.execute(
-                        """
-                        UPDATE dashboard
-                        SET value = %s
-                        WHERE identifier = %s
-                        AND field_id = %s
-                        AND device_id = %s
-                        """,
+                        self._get_update_dashboard_sql(),
                         (
                             value,
                             self.dashboardDict[field_id],
@@ -117,10 +117,7 @@ class MariaDBAdapter(Adapter):
 
         if not off:
             self.cursor.executemany(
-                """
-                INSERT INTO data(device_id, field_id, date, value)
-                VALUES(%s, %s, %s, %s)
-                """,
+                self._get_saverecord_sql(),
                 querydata
             )
 
@@ -136,10 +133,28 @@ class MariaDBAdapter(Adapter):
                 querydata.append((device_id, field_id, 0))
 
         self.cursor.executemany(
-            """
-            INSERT INTO data(device_id, field_id, date, value)
-            VALUES(%s, %s, NOW(), %s)
-            """,
+            self._get_empty_saverecord_sql(),
             querydata
         )
         self.connection.commit()
+
+    def _get_update_dashboard_sql(self):
+        return """
+            UPDATE dashboard
+            SET value = %s
+            WHERE identifier = %s
+            AND field_id = %s
+            AND device_id = %s
+        """
+
+    def _get_saverecord_sql(self):
+        return """
+            INSERT INTO data(device_id, field_id, date, value)
+            VALUES(%s, %s, %s, %s)
+            """
+
+    def _get_empty_saverecord_sql(self):
+        return """
+            INSERT INTO data(device_id, field_id, date, value)
+            VALUES(%s, %s, NOW(), %s)
+            """
