@@ -148,8 +148,29 @@ class MariaDBAdapter(Adapter):
         return self.cursor.lastrowid
 
     def __saveDiaryData(self, diary_id):
-        print('requested to save diary data from db')
-        pass
+        sql = """
+            update diary SET started_at = (
+                select min(time(z.date))
+                from data z
+                where z.date >= (
+                    select datestamp from diary where id = {}
+                ) &&  z.date < ((
+                    select datestamp from diary where id = {}
+                ) + INTERVAL 1 DAY)
+            ), ended_at = (
+                select max(time(z.date))
+                from data z
+                where z.date >= (
+                    select datestamp from diary where id = {}
+                ) &&  z.date < ((
+                    select datestamp from diary where id = {}
+                ) + INTERVAL 1 DAY)
+            )
+            where id = {}
+        """.format(diary_id, diary_id, diary_id, diary_id, diary_id)
+
+        self.cursor.execute(sql)
+        # TODO: add per device avg, min max counter values
 
     def __addEmptyRecord(self):
         querydata = []
