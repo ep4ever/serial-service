@@ -87,7 +87,14 @@ class MariaDBAdapter(Adapter):
     def saveRecord(self, record: dict, off: bool = False):
         querydata = []
 
+        # TODO: get diary_id (from record[0].get('datestamp'))
+        diary_id = self.__getDiaryId(record[0].get('datestamp'))
         if not off:
+            # TODO: if diary_id is None:
+            # Create a diary entry for this datestamp
+            if diary_id is None:
+                diary_id = self.__createDiary(record[0].get('datestamp'))
+
             print("saving ...")
             self.isoff = False
         else:
@@ -95,6 +102,8 @@ class MariaDBAdapter(Adapter):
             if not self.isoff:
                 print("saving last empty record ...")
                 self.__addEmptyRecord()
+                # TODO: Save counters of previous day in diary table
+                self.__saveDiaryData(diary_id)
                 self.isoff = True
 
         for r in record:
@@ -122,6 +131,24 @@ class MariaDBAdapter(Adapter):
             )
 
         self.connection.commit()
+
+    def __getDiaryId(self, datestamp):
+        self.cursor.execute('SELECT id FROM diary where datestamp = %s')
+        diary = self.cursor.fetchone()
+        if diary is None:
+            return None
+
+        return diary[0]
+
+    def __createDiary(self, datestamp):
+        self.cursor.execute('INSERT INTO diary(datestamp) VALUES(%s)', (
+            datestamp
+        ))
+        return self.cursor.lastrowid
+
+    def __saveDiaryData(self, diary_id):
+        print('requested to save diary data from db')
+        pass
 
     def __addEmptyRecord(self):
         querydata = []
