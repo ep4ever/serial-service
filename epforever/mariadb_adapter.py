@@ -142,7 +142,7 @@ class MariaDBAdapter(Adapter):
         return diary[0]
 
     def __createDiary(self, datestamp):
-        self.cursor.execute("INSERT INTO diary(datestamp) VALUES({})".format(
+        self.cursor.execute("INSERT INTO diary(datestamp) VALUES('{}')".format(
             datestamp
         ))
         return self.cursor.lastrowid
