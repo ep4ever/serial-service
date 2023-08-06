@@ -145,6 +145,7 @@ class MariaDBAdapter(Adapter):
         self.cursor.execute("INSERT INTO diary(datestamp) VALUES('{}')".format(
             datestamp
         ))
+        self.connection.commit()
         return self.cursor.lastrowid
 
     def __saveDiaryData(self, diary_id):
