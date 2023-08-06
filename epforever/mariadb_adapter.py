@@ -133,7 +133,8 @@ class MariaDBAdapter(Adapter):
         self.connection.commit()
 
     def __getDiaryId(self, datestamp):
-        self.cursor.execute('SELECT id FROM diary where datestamp = %s')
+        sql = "SELECT id FROM diary where datestamp = '{}'".format(datestamp)
+        self.cursor.execute(sql)
         diary = self.cursor.fetchone()
         if diary is None:
             return None
@@ -141,7 +142,7 @@ class MariaDBAdapter(Adapter):
         return diary[0]
 
     def __createDiary(self, datestamp):
-        self.cursor.execute('INSERT INTO diary(datestamp) VALUES(%s)', (
+        self.cursor.execute("INSERT INTO diary(datestamp) VALUES({})".format(
             datestamp
         ))
         return self.cursor.lastrowid
