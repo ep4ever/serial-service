@@ -87,11 +87,8 @@ class MariaDBAdapter(Adapter):
     def saveRecord(self, record: dict, off: bool = False):
         querydata = []
 
-        # TODO: get diary_id (from record[0].get('datestamp'))
         diary_id = self.__getDiaryId(record[0].get('datestamp'))
         if not off:
-            # TODO: if diary_id is None:
-            # Create a diary entry for this datestamp
             if diary_id is None:
                 diary_id = self.__createDiary(record[0].get('datestamp'))
 
@@ -102,7 +99,7 @@ class MariaDBAdapter(Adapter):
             if not self.isoff:
                 print("saving last empty record ...")
                 self.__addEmptyRecord()
-                # TODO: Save counters of previous day in diary table
+
                 self.__saveDiaryData(diary_id, record[0].get('datestamp'))
                 self.isoff = True
 
@@ -150,48 +147,63 @@ class MariaDBAdapter(Adapter):
 
     def __saveDiaryData(self, diary_id, datestamp):
         sql = """
-            update diary SET started_at = (
-                select min(time(z.date))
-                from data z
-                where z.date >= (
-                    select datestamp from diary where id = {}
+            UPDATE diary SET started_at = (
+                SELECT MIN(time(z.date))
+                FROM data AS z
+                WHERE z.date >= (
+                    SELECT datestamp FROM diary WHERE id = {}
                 ) &&  z.date < ((
-                    select datestamp from diary where id = {}
+                    SELECT datestamp FROM diary WHERE id = {}
                 ) + INTERVAL 1 DAY)
             ), ended_at = (
-                select max(time(z.date))
-                from data z
-                where z.date >= (
-                    select datestamp from diary where id = {}
+                SELECT MAX(time(z.date))
+                FROM data AS z
+                WHERE z.date >= (
+                    SELECT datestamp FROM diary WHERE id = {}
                 ) &&  z.date < ((
-                    select datestamp from diary where id = {}
+                    SELECT datestamp FROM diary WHERE id = {}
                 ) + INTERVAL 1 DAY)
             )
-            where id = {}
+            WHERE id = {}
         """.format(diary_id, diary_id, diary_id, diary_id, diary_id)
-        self.cursor.execute(sql)
 
-        for device_id in self.deviceDict:
-            for f in self.register:
-                field_id = f.get('id')
+        print("Updating started and ended fields for diary {}".format(
+            diary_id
+        ))
+        self.cursor.execute(sql)
+        self.connection.commit()
+
+        for d in self.deviceDict:
+            device_id = self.deviceDict[d]
+            for f in self.fieldDict:
+                field_id = self.fieldDict[f].get('id')
                 selargs = (device_id, field_id, datestamp, datestamp)
+                print("Selecting counters for {}", selargs)
                 self.cursor.execute(
                     """
-                    select
-                        avg(z.value) as avgval,
-                        min(z.value) as minval,
-                        max(z.value) as maxval
-                    from data z
-                    where z.device_id = %s
-                    and z.field_id  = %s
-                    and z.date >= %s && z.date < (%s + INTERVAL 1 DAY)
+                    SELECT
+                        IFNULL(avg(z.value), 0) AS avgval,
+                        IFNULL(min(z.value), 0) AS minval,
+                        IFNULL(max(z.value), 0) AS maxval
+                    FROM data AS z
+                    WHERE z.device_id = %s
+                    AND z.field_id  = %s
+                    AND z.date >= %s && z.date < (%s + INTERVAL 1 DAY)
+                    AND z.value > 0
                     """,
                     selargs
                 )
                 counters = self.cursor.fetchone()
                 saveargs = (diary_id, device_id, field_id) + counters
-
+                print("Saving for device->{} field->{} args->{}".format(
+                    d,
+                    f,
+                    saveargs
+                ))
                 self.cursor.execute(self._get_savediarydata_sql(), saveargs)
+
+        self.connection.commit()
+        print('All diary data saved!')
 
     def __addEmptyRecord(self):
         querydata = []
