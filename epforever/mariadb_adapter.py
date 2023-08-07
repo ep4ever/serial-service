@@ -9,6 +9,7 @@ class MariaDBAdapter(Adapter):
     deviceDict: None
     fieldDict: None
     dashboardDict: None
+    isSavingDiaryData = False
 
     def __init__(self, config: dict):
         super().__init__(config)
@@ -18,6 +19,7 @@ class MariaDBAdapter(Adapter):
         self.deviceDict = None
         self.fieldDict = None
         self.dashboardDict = None
+        self.isSavingDiaryData = False
 
     def loadConfig(self):
         self.deviceDict = dict()
@@ -86,6 +88,9 @@ class MariaDBAdapter(Adapter):
 
     def saveRecord(self, record: dict, off: bool = False):
         querydata = []
+        if self.isSavingDiaryData is True:
+            print("skiping save: backup in progress...")
+            return
 
         diary_id = self.__getDiaryId(record[0].get('datestamp'))
         if not off:
@@ -102,6 +107,7 @@ class MariaDBAdapter(Adapter):
 
                 self.__saveDiaryData(diary_id, record[0].get('datestamp'))
                 self.isoff = True
+                return
 
         for r in record:
             device_id = self.deviceDict[r.get('device')]
@@ -146,6 +152,7 @@ class MariaDBAdapter(Adapter):
         return self.cursor.lastrowid
 
     def __saveDiaryData(self, diary_id, datestamp):
+        self.isSavingDiaryData = True
         sql = """
             UPDATE diary SET started_at = (
                 SELECT MIN(time(z.date))
@@ -176,7 +183,7 @@ class MariaDBAdapter(Adapter):
         for d in self.deviceDict:
             device_id = self.deviceDict[d]
             for f in self.fieldDict:
-                field_id = self.fieldDict[f].get('id')
+                field_id = self.fieldDict[f]
                 selargs = (device_id, field_id, datestamp, datestamp)
                 print("Selecting counters for {}", selargs)
                 self.cursor.execute(
@@ -204,6 +211,7 @@ class MariaDBAdapter(Adapter):
 
         self.connection.commit()
         print('All diary data saved!')
+        self.isSavingDiaryData = False
 
     def __addEmptyRecord(self):
         querydata = []
