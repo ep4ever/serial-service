@@ -103,7 +103,7 @@ class MariaDBAdapter(Adapter):
                 print("saving last empty record ...")
                 self.__addEmptyRecord()
                 # TODO: Save counters of previous day in diary table
-                self.__saveDiaryData(diary_id)
+                self.__saveDiaryData(diary_id, record[0].get('datestamp'))
                 self.isoff = True
 
         for r in record:
@@ -148,7 +148,7 @@ class MariaDBAdapter(Adapter):
         self.connection.commit()
         return self.cursor.lastrowid
 
-    def __saveDiaryData(self, diary_id):
+    def __saveDiaryData(self, diary_id, datestamp):
         sql = """
             update diary SET started_at = (
                 select min(time(z.date))
@@ -169,9 +169,29 @@ class MariaDBAdapter(Adapter):
             )
             where id = {}
         """.format(diary_id, diary_id, diary_id, diary_id, diary_id)
-
         self.cursor.execute(sql)
-        # TODO: add per device avg, min max counter values
+
+        for device_id in self.deviceDict:
+            for f in self.register:
+                field_id = f.get('id')
+                selargs = (device_id, field_id, datestamp, datestamp)
+                self.cursor.execute(
+                    """
+                    select
+                        avg(z.value) as avgval,
+                        min(z.value) as minval,
+                        max(z.value) as maxval
+                    from data z
+                    where z.device_id = %s
+                    and z.field_id  = %s
+                    and z.date >= %s && z.date < (%s + INTERVAL 1 DAY)
+                    """,
+                    selargs
+                )
+                counters = self.cursor.fetchone()
+                saveargs = (diary_id, device_id, field_id) + counters
+
+                self.cursor.execute(self._get_savediarydata_sql(), saveargs)
 
     def __addEmptyRecord(self):
         querydata = []
@@ -201,6 +221,16 @@ class MariaDBAdapter(Adapter):
         return """
             INSERT INTO data(device_id, field_id, date, value)
             VALUES(%s, %s, %s, %s)
+            """
+
+    def _get_savediarydata_sql(self):
+        return """
+            INSERT INTO diary_data(
+                diary_id, device_id, field_id, avgval, minval, maxval
+            )
+            VALUES(
+                %s, %s, %s, %s, %s, %s
+            )
             """
 
     def _get_empty_saverecord_sql(self):
