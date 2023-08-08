@@ -42,9 +42,6 @@ class EpforEverApp():
 
         threading.Timer(15.0, self.run).start()
 
-        if (self.p_index > 3):
-            self.p_index = 0
-
         # get timestamps
         localtime = time.localtime()
         timestamp = time.strftime("%H:%M:%S", localtime)
@@ -66,6 +63,9 @@ class EpforEverApp():
             record=records,
             off=alloff
         )
+
+        if (self.p_index > 3):
+            self.p_index = 0
 
         print(f"{self.proc_char[self.p_index]}", end="")
         print("\r", end="")
