@@ -1,11 +1,9 @@
--- total solar panel production in kwh
+SET lc_time_names = 'fr_FR';
+
+-- total solar panel production in kwh by month
 SELECT
-	SUM((
-		dd.avgval * 
-		(TIMESTAMPDIFF(SECOND, dr.started_at, dr.ended_at) / 3600.0)
-	) / 1000) AS kwh
-from diary_data dd
-join diary dr ON dr.id = dd.diary_id 
-join device d ON d.id = dd.device_id 
-join field f ON f.id = dd.field_id
-where f.name = 'rated_watt'
+    DATE_FORMAT(datestamp, '%W %d %M') AS jour,
+    TRUNCATE(SUM(wh)/1000, 2) AS kWh
+FROM day_prod_by_device_view
+WHERE MONTH(datestamp) = :monthval
+GROUP BY datestamp;
