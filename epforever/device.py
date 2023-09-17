@@ -1,22 +1,21 @@
+from typing import cast
+
+from serial import Serial
+from serial.serialutil import SerialException
 
 from minimalmodbus import Instrument
-from serial.serialutil import SerialException
 
 
 class Device:
-    id: int
-    name: str
-    port: str
-    instrument: None
-    register: dict
-    device_has_error: bool = False
-    device_has_power: bool = False
 
     def __init__(self, rawdevice: dict, register: dict):
-        self.id = rawdevice.get('id')
-        self.name = rawdevice.get('name')
-        self.port = rawdevice.get('port')
-        self.register = register
+        self.instrument: Instrument
+        self.id: int = int(str(rawdevice.get('id')))
+        self.name: str = str(rawdevice.get('name'))
+        self.port: str = str(rawdevice.get('port'))
+        self.register: dict = register
+        self.device_has_error: bool = False
+        self.device_has_power: bool = False
 
         self.__loadInstrument()
 
@@ -67,7 +66,7 @@ class Device:
         record: dict,
         empty: bool = False,
         withcounter: bool = True
-    ) -> str:
+    ):
         for key, item in self.register.items():
             serialvalue = None
             if empty:
@@ -82,11 +81,14 @@ class Device:
                     )
                 if item.get('kind') == 'lowhigh':
                     lsb = self.instrument.read_register(item.get('lsb'), 2, 4)
-                    msb = self.instrument.read_register(item.get('msb'), 2, 4)
+                    msb = int(self.instrument.read_register(
+                        item.get('msb'), 2, 4
+                    ))
                     serialvalue = lsb + (msb << 8)
 
             if serialvalue is not None:
-                record.get("data").append({
+                datas: list = cast(list, record.get("data"))
+                datas.append({
                     "field": item.get('fieldname'),
                     "value": "{:.2f}".format(serialvalue)
                 })
@@ -98,9 +100,10 @@ class Device:
                 slaveaddress=1,
                 close_port_after_each_call=False,
             )
-            self.instrument.serial.baudrate = 115200
+            s: Serial = cast(Serial, self.instrument.serial)
+            s.baudrate = 115200
             # default is 0.05 s
-            self.instrument.serial.timeout = 1.2
+            s.timeout = 1.2
         except SerialException as e:
             print("Device: {} connection error: {}".format(
                 self,
@@ -113,7 +116,11 @@ class Device:
         # so if pv_array_input_current is zero
         # the device does not produce anymore
         try:
-            h = self.register.get('pv_array_input_current').get('value')
+            input_current: dict = cast(
+                dict,
+                self.register.get('pv_array_input_current')
+            )
+            h: int = cast(int, input_current.get('value'))
             value = self.instrument.read_register(h, 2, 4)
             return (value > 0)
         except Exception as e:

@@ -1,35 +1,30 @@
-from epforever.adapter import Adapter
-import MySQLdb
 from ast import literal_eval
+from typing import cast
+
+import MySQLdb
+from MySQLdb.connections import Connection
+
+from epforever.adapter import Adapter
 
 
 class MariaDBAdapter(Adapter):
-    cursor: None
-    connection: None
-    deviceDict: None
-    fieldDict: None
-    dashboardDict: None
-    isSavingDiaryData = False
 
     def __init__(self, config: dict):
         super().__init__(config)
 
-        self.cursor = None
-        self.connection = None
-        self.deviceDict = None
-        self.fieldDict = None
-        self.dashboardDict = None
-        self.isSavingDiaryData = False
+        self.connection: Connection = None  # pyright: ignore
+        self.deviceDict: dict = {}
+        self.fieldDict: dict = {}
+        self.dashboardDict: dict = {}
+        self.dashboardDict: dict = {}
+        self.isSavingDiaryData: bool = False
 
     def loadConfig(self):
-        self.deviceDict = dict()
-        self.fieldDict = dict()
-        self.dashboardDict = dict()
-
         self.init()
 
-        self.cursor.execute('SELECT id, name, port FROM device')
-        devices = self.cursor.fetchall()
+        cursor = self.connection.cursor()
+        cursor.execute('SELECT id, name, port FROM device')
+        devices = cursor.fetchall()
         for device in devices:
             self.devices.append({
                 'id': device[0],
@@ -38,10 +33,10 @@ class MariaDBAdapter(Adapter):
             })
             self.deviceDict[device[1]] = device[0]
 
-        self.cursor.execute('''
+        cursor.execute('''
             SELECT id, label, name, category, registeraddr FROM field
         ''')
-        fields = self.cursor.fetchall()
+        fields = cursor.fetchall()
         register = {}
         for field in fields:
             keyval = field[1]
@@ -65,10 +60,10 @@ class MariaDBAdapter(Adapter):
 
         self.register = register
 
-        self.cursor.execute(
+        cursor.execute(
             'SELECT DISTINCT identifier, field_id FROM dashboard'
         )
-        items = self.cursor.fetchall()
+        items = cursor.fetchall()
         for item in items:
             self.dashboardDict[item[1]] = item[0]
 
@@ -82,11 +77,10 @@ class MariaDBAdapter(Adapter):
             host=self.config.get('DB_HOST'),
             database=self.config.get('DB_NAME')
         )
-        self.cursor = self.connection.cursor()
 
         return True
 
-    def saveRecord(self, record: dict, off: bool = False):
+    def saveRecord(self, record: list, off: bool = False):
         querydata = []
         if self.isSavingDiaryData is True:
             print("skiping save: backup in progress...")
@@ -108,16 +102,19 @@ class MariaDBAdapter(Adapter):
                 self.__saveDiaryData(diary_id, record[0].get('datestamp'))
                 self.isoff = True
                 return
-
         for r in record:
             device_id = self.deviceDict[r.get('device')]
-            datestamp = "{} {}".format(r.get('datestamp'), r.get('timestamp'))
-            for data in r.get('data'):
+            datestamp = "{} {}".format(
+                r.get('datestamp'),
+                r.get('timestamp')
+            )
+            datas: list = cast(list, r.get("data"))
+            for data in datas:
                 field_id = self.fieldDict[data.get('field')]
                 value = data.get('value')
                 querydata.append((device_id, field_id, datestamp, value))
                 if field_id in self.dashboardDict:
-                    self.cursor.execute(
+                    self.connection.cursor().execute(
                         self._get_update_dashboard_sql(),
                         (
                             value,
@@ -128,7 +125,7 @@ class MariaDBAdapter(Adapter):
                     )
 
         if not off:
-            self.cursor.executemany(
+            self.connection.cursor().executemany(
                 self._get_saverecord_sql(),
                 querydata
             )
@@ -137,22 +134,27 @@ class MariaDBAdapter(Adapter):
 
     def __getDiaryId(self, datestamp):
         sql = "SELECT id FROM diary where datestamp = '{}'".format(datestamp)
-        self.cursor.execute(sql)
-        diary = self.cursor.fetchone()
+        cursor = self.connection.cursor()
+        cursor.execute(sql)
+        diary = cursor.fetchone()
         if diary is None:
             return None
 
         return diary[0]
 
     def __createDiary(self, datestamp):
-        self.cursor.execute("INSERT INTO diary(datestamp) VALUES('{}')".format(
-            datestamp
-        ))
+        cursor = self.connection.cursor()
+        cursor.execute(
+            "INSERT INTO diary(datestamp) VALUES('{}')".format(
+                datestamp
+            )
+        )
         self.connection.commit()
-        return self.cursor.lastrowid
+        return self.connection.cursor().lastrowid
 
     def __saveDiaryData(self, diary_id, datestamp):
         self.isSavingDiaryData = True
+        cursor = self.connection.cursor()
         sql = """
             UPDATE diary SET started_at = (
                 SELECT MIN(time(z.date))
@@ -177,7 +179,7 @@ class MariaDBAdapter(Adapter):
         print("Updating started and ended fields for diary {}".format(
             diary_id
         ))
-        self.cursor.execute(sql)
+        cursor.execute(sql)
         self.connection.commit()
 
         for d in self.deviceDict:
@@ -186,7 +188,7 @@ class MariaDBAdapter(Adapter):
                 field_id = self.fieldDict[f]
                 selargs = (device_id, field_id, datestamp, datestamp)
                 print("Selecting counters for {}", selargs)
-                self.cursor.execute(
+                self.connection.cursor().execute(
                     """
                     SELECT
                         IFNULL(avg(z.value), 0) AS avgval,
@@ -200,14 +202,17 @@ class MariaDBAdapter(Adapter):
                     """,
                     selargs
                 )
-                counters = self.cursor.fetchone()
+                counters = self.connection.cursor().fetchone()
                 saveargs = (diary_id, device_id, field_id) + counters
                 print("Saving for device->{} field->{} args->{}".format(
                     d,
                     f,
                     saveargs
                 ))
-                self.cursor.execute(self._get_savediarydata_sql(), saveargs)
+                self.connection.cursor().execute(
+                    self._get_savediarydata_sql(),
+                    saveargs
+                )
 
         self.connection.commit()
         print('All diary data saved!')
@@ -222,7 +227,7 @@ class MariaDBAdapter(Adapter):
                 field_id = self.fieldDict[field]
                 querydata.append((device_id, field_id, 0))
 
-        self.cursor.executemany(
+        self.connection.cursor().executemany(
             self._get_empty_saverecord_sql(),
             querydata
         )

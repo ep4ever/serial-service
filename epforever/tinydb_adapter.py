@@ -1,8 +1,11 @@
-import os
-import json
-import time
-import tempfile
 from datetime import datetime
+from io import TextIOWrapper
+import json
+import os
+import tempfile
+import time
+from typing import cast
+
 from tinydb import TinyDB
 
 from epforever.adapter import Adapter
@@ -11,12 +14,11 @@ from epforever.registers import epever
 
 
 class TinyDBAdapter(Adapter):
-    envConfig: dict
     db_name: str
     nightenv_filepath: str
 
     def loadConfig(self):
-        lconfig = self.config.get('MAIN_CONFIG_PATH')
+        lconfig: str = str(self.config.get('MAIN_CONFIG_PATH'))
         if not os.path.isfile(lconfig):
             raise AdapterError(
                 "ERROR: could not found config.json from path {}".format(
@@ -24,9 +26,10 @@ class TinyDBAdapter(Adapter):
                 )
             )
 
-        f = open(lconfig)
-        self.envConfig = json.load(f)
-        for device in self.envConfig.get('devices'):
+        f: TextIOWrapper = open(lconfig)
+        self.envConfig: dict = json.load(f)
+        self.devices: list = cast(list, self.envConfig.get('devices'))
+        for device in self.devices:
             self.devices.append({
                 'id': 0,
                 'name': device.get('name'),
@@ -43,7 +46,7 @@ class TinyDBAdapter(Adapter):
         )
 
     def init(self):
-        db_directory = self.envConfig.get('db_folder')
+        db_directory: str = str(self.envConfig.get('db_folder'))
         if not os.path.isdir(db_directory):
             print("ERROR: could not find the db_folder check config.yaml")
             return False
@@ -98,7 +101,7 @@ class TinyDBAdapter(Adapter):
         timestamp = time.strftime("%H:%M:%S", localtime)
         datestamp = time.strftime("%Y-%m-%d", localtime)
         records = []
-        for device in self.envConfig.get('devices'):
+        for device in self.devices:
             record = {
                 "device": device.get('name'),
                 "timestamp": timestamp,
@@ -108,8 +111,8 @@ class TinyDBAdapter(Adapter):
             for r in self.register:
                 if r.get('fieldname') is None:
                     continue
-
-                record.get('data').append({
+                datas: list = cast(list, record.get("data"))
+                datas.append({
                     'fieldname': r.get('fieldname'),
                     'value': 0
                 })

@@ -11,8 +11,11 @@ class SqliteDBAdapter(MariaDBAdapter):
         if self.connection is not None:
             return True
 
-        dbpath = self.config.get('DB_PATH')
-        self.connection = sqlite3.connect(dbpath, check_same_thread=False)
+        dbpath: str = str(self.config.get('DB_PATH'))
+        self.connection: sqlite3.Connection = sqlite3.connect(
+            dbpath,
+            check_same_thread=False
+        )
         self.cursor = self.connection.cursor()
 
         return True

@@ -164,3 +164,4 @@ dist/
 
 *.mwb.bak
 minimalmodbus.py
+nohup.out

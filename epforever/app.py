@@ -1,27 +1,24 @@
-import time
 import sys
 import threading
+import time
+
 from epforever.adapter import Adapter
 from epforever.device import Device
 
 
 class EpforEverApp():
-    adapter: Adapter
-    devices: list
-    p_index: int
-    proc_char: dict
-    runnable: bool
 
     def __init__(self, adapter: Adapter):
-        self.adapter = adapter
-        self.devices = list()
-        self.p_index = 0
-        self.proc_char = {
+        self.adapter: Adapter = adapter
+        self.devices: list = list()
+        self.p_index: int = 0
+        self.proc_char: dict = {
             0: "-",
             1: "\\",
             2: "|",
             3: "/",
         }
+        self.runnable: bool = False
 
         self.adapter.loadConfig()
 
@@ -42,13 +39,13 @@ class EpforEverApp():
 
         threading.Timer(15.0, self.run).start()
 
+        records: list = []
+        nboff: int = 0
+
         # get timestamps
         localtime = time.localtime()
         timestamp = time.strftime("%H:%M:%S", localtime)
         datestamp = time.strftime("%Y-%m-%d", localtime)
-
-        records = []
-        nboff = 0
 
         # for each device
         for device in self.devices:
