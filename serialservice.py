@@ -1,24 +1,26 @@
 #!/usr/bin/env python
 from dotenv import dotenv_values
-import sys
-import os
-import json
-
+# import sys
 from epforever.app import EpforEverApp
+from epforever.tinydb_adapter import TinyDBAdapter
+from epforever.mariadb_adapter import MariaDBAdapter
+from epforever.sqlitedb_adapter import SqliteDBAdapter
+
 
 if __name__ == '__main__':
-    # looking for main config location file
-    config = None
     dconfig = dotenv_values(".env")
-    lconfig = dconfig.get('MAIN_CONFIG_PATH')
+    mode = dconfig.get('MODE', 'tiny')
+    adapter = None
+    if mode == 'tiny':
+        adapter = TinyDBAdapter(dconfig)
+    if mode == 'maria':
+        adapter = MariaDBAdapter(dconfig)
+    if mode == 'sqlite':
+        adapter = SqliteDBAdapter(dconfig)
 
-    if not os.path.isfile(lconfig):
-        print("API ERROR: main config.json could not be read")
-        sys.exit(1)
+    if adapter is None:
+        print("ERROR: unknown adapter {}".format(adapter))
+        exit(1)
 
-    f = open(lconfig)
-    config = json.load(f)
-    f.close()
-
-    app = EpforEverApp(config=config)
+    app = EpforEverApp(adapter=adapter)
     app.run()

@@ -161,3 +161,7 @@ cython_debug/
 
 config.yaml
 dist/
+
+*.mwb.bak
+minimalmodbus.py
+nohup.out
