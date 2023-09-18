@@ -1,6 +1,0 @@
-nohup: les entrées sont ignorées
-creating com from devices {'id': 1, 'name': '6420an', 'port': '/dev/ttyXRUSB2'}
-creating com from devices {'id': 2, 'name': '3910bp', 'port': '/dev/ttyXRUSB1'}
-creating com from devices {'id': 3, 'name': '3210an', 'port': '/dev/ttyXRUSB0'}
-saving ...
--

@@ -154,69 +154,73 @@ class MariaDBAdapter(Adapter):
 
     def __saveDiaryData(self, diary_id, datestamp):
         self.isSavingDiaryData = True
-        cursor = self.connection.cursor()
-        sql = """
-            UPDATE diary SET started_at = (
-                SELECT MIN(time(z.date))
-                FROM data AS z
-                WHERE z.date >= (
-                    SELECT datestamp FROM diary WHERE id = {}
-                ) &&  z.date < ((
-                    SELECT datestamp FROM diary WHERE id = {}
-                ) + INTERVAL 1 DAY)
-            ), ended_at = (
-                SELECT MAX(time(z.date))
-                FROM data AS z
-                WHERE z.date >= (
-                    SELECT datestamp FROM diary WHERE id = {}
-                ) &&  z.date < ((
-                    SELECT datestamp FROM diary WHERE id = {}
-                ) + INTERVAL 1 DAY)
-            )
-            WHERE id = {}
-        """.format(diary_id, diary_id, diary_id, diary_id, diary_id)
-
-        print("Updating started and ended fields for diary {}".format(
-            diary_id
-        ))
-        cursor.execute(sql)
-        self.connection.commit()
-
-        for d in self.deviceDict:
-            device_id = self.deviceDict[d]
-            for f in self.fieldDict:
-                field_id = self.fieldDict[f]
-                selargs = (device_id, field_id, datestamp, datestamp)
-                print("Selecting counters for {}", selargs)
-                self.connection.cursor().execute(
-                    """
-                    SELECT
-                        IFNULL(avg(z.value), 0) AS avgval,
-                        IFNULL(min(z.value), 0) AS minval,
-                        IFNULL(max(z.value), 0) AS maxval
+        try:
+            cursor = self.connection.cursor()
+            sql = """
+                UPDATE diary SET started_at = (
+                    SELECT MIN(time(z.date))
                     FROM data AS z
-                    WHERE z.device_id = %s
-                    AND z.field_id  = %s
-                    AND z.date >= %s && z.date < (%s + INTERVAL 1 DAY)
-                    AND z.value > 0
-                    """,
-                    selargs
+                    WHERE z.date >= (
+                        SELECT datestamp FROM diary WHERE id = {}
+                    ) &&  z.date < ((
+                        SELECT datestamp FROM diary WHERE id = {}
+                    ) + INTERVAL 1 DAY)
+                ), ended_at = (
+                    SELECT MAX(time(z.date))
+                    FROM data AS z
+                    WHERE z.date >= (
+                        SELECT datestamp FROM diary WHERE id = {}
+                    ) &&  z.date < ((
+                        SELECT datestamp FROM diary WHERE id = {}
+                    ) + INTERVAL 1 DAY)
                 )
-                counters = self.connection.cursor().fetchone()
-                saveargs = (diary_id, device_id, field_id) + counters
-                print("Saving for device->{} field->{} args->{}".format(
-                    d,
-                    f,
-                    saveargs
-                ))
-                self.connection.cursor().execute(
-                    self._get_savediarydata_sql(),
-                    saveargs
-                )
+                WHERE id = {}
+            """.format(diary_id, diary_id, diary_id, diary_id, diary_id)
 
-        self.connection.commit()
-        print('All diary data saved!')
-        self.isSavingDiaryData = False
+            print("Updating started and ended fields for diary {}".format(
+                diary_id
+            ))
+            cursor.execute(sql)
+            self.connection.commit()
+
+            for d in self.deviceDict:
+                device_id = self.deviceDict[d]
+                for f in self.fieldDict:
+                    field_id = self.fieldDict[f]
+                    selargs = (device_id, field_id, datestamp, datestamp)
+                    print("Selecting counters for {}", selargs)
+                    cursor.execute(
+                        """
+                        SELECT
+                            IFNULL(avg(z.value), 0) AS avgval,
+                            IFNULL(min(z.value), 0) AS minval,
+                            IFNULL(max(z.value), 0) AS maxval
+                        FROM data AS z
+                        WHERE z.device_id = %s
+                        AND z.field_id  = %s
+                        AND z.date >= %s && z.date < (%s + INTERVAL 1 DAY)
+                        AND z.value > 0
+                        """,
+                        selargs
+                    )
+                    counters = cursor.fetchone()
+                    saveargs = (diary_id, device_id, field_id) + counters
+                    print("Saving for device->{} field->{} args->{}".format(
+                        d,
+                        f,
+                        saveargs
+                    ))
+                    cursor.execute(
+                        self._get_savediarydata_sql(),
+                        saveargs
+                    )
+
+            self.connection.commit()
+            print('All diary data saved!')
+            self.isSavingDiaryData = False
+        except Exception as e:
+            print(f"ERROR: {e}")
+            self.isSavingDiaryData = False
 
     def __addEmptyRecord(self):
         querydata = []
