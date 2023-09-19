@@ -82,15 +82,10 @@ class MariaDBAdapter(Adapter):
 
     def saveRecord(self, record: list, off: bool = False):
         querydata = []
-        if self.isSavingDiaryData is True:
-            print("skiping save: backup in progress...")
-            return
+        cursor = self.connection.cursor()
 
-        diary_id = self.__getDiaryId(record[0].get('datestamp'))
         if not off:
-            if diary_id is None:
-                diary_id = self.__createDiary(record[0].get('datestamp'))
-
+            self.__syncDiary(record[0].get('datestamp'))
             print("saving ...")
             self.isoff = False
         else:
@@ -98,10 +93,8 @@ class MariaDBAdapter(Adapter):
             if not self.isoff:
                 print("saving last empty record ...")
                 self.__addEmptyRecord()
-
-                self.__saveDiaryData(diary_id, record[0].get('datestamp'))
                 self.isoff = True
-                return
+
         for r in record:
             device_id = self.deviceDict[r.get('device')]
             datestamp = "{} {}".format(
@@ -114,7 +107,7 @@ class MariaDBAdapter(Adapter):
                 value = data.get('value')
                 querydata.append((device_id, field_id, datestamp, value))
                 if field_id in self.dashboardDict:
-                    self.connection.cursor().execute(
+                    cursor.execute(
                         self._get_update_dashboard_sql(),
                         (
                             value,
@@ -125,102 +118,24 @@ class MariaDBAdapter(Adapter):
                     )
 
         if not off:
-            self.connection.cursor().executemany(
+            cursor.executemany(
                 self._get_saverecord_sql(),
                 querydata
             )
+            self.connection.commit()
 
-        self.connection.commit()
-
-    def __getDiaryId(self, datestamp):
+    def __syncDiary(self, datestamp):
         sql = "SELECT id FROM diary where datestamp = '{}'".format(datestamp)
         cursor = self.connection.cursor()
         cursor.execute(sql)
         diary = cursor.fetchone()
         if diary is None:
-            return None
-
-        return diary[0]
-
-    def __createDiary(self, datestamp):
-        cursor = self.connection.cursor()
-        cursor.execute(
-            "INSERT INTO diary(datestamp) VALUES('{}')".format(
-                datestamp
-            )
-        )
-        self.connection.commit()
-        return self.connection.cursor().lastrowid
-
-    def __saveDiaryData(self, diary_id, datestamp):
-        self.isSavingDiaryData = True
-        try:
-            cursor = self.connection.cursor()
-            sql = """
-                UPDATE diary SET started_at = (
-                    SELECT MIN(time(z.date))
-                    FROM data AS z
-                    WHERE z.date >= (
-                        SELECT datestamp FROM diary WHERE id = {}
-                    ) &&  z.date < ((
-                        SELECT datestamp FROM diary WHERE id = {}
-                    ) + INTERVAL 1 DAY)
-                ), ended_at = (
-                    SELECT MAX(time(z.date))
-                    FROM data AS z
-                    WHERE z.date >= (
-                        SELECT datestamp FROM diary WHERE id = {}
-                    ) &&  z.date < ((
-                        SELECT datestamp FROM diary WHERE id = {}
-                    ) + INTERVAL 1 DAY)
+            cursor.execute(
+                "INSERT INTO diary(datestamp) VALUES('{}')".format(
+                    datestamp
                 )
-                WHERE id = {}
-            """.format(diary_id, diary_id, diary_id, diary_id, diary_id)
-
-            print("Updating started and ended fields for diary {}".format(
-                diary_id
-            ))
-            cursor.execute(sql)
+            )
             self.connection.commit()
-
-            for d in self.deviceDict:
-                device_id = self.deviceDict[d]
-                for f in self.fieldDict:
-                    field_id = self.fieldDict[f]
-                    selargs = (device_id, field_id, datestamp, datestamp)
-                    print("Selecting counters for {}", selargs)
-                    cursor.execute(
-                        """
-                        SELECT
-                            IFNULL(avg(z.value), 0) AS avgval,
-                            IFNULL(min(z.value), 0) AS minval,
-                            IFNULL(max(z.value), 0) AS maxval
-                        FROM data AS z
-                        WHERE z.device_id = %s
-                        AND z.field_id  = %s
-                        AND z.date >= %s && z.date < (%s + INTERVAL 1 DAY)
-                        AND z.value > 0
-                        """,
-                        selargs
-                    )
-                    counters = cursor.fetchone()
-                    saveargs = (diary_id, device_id, field_id) + counters
-                    print("Saving for device->{} field->{} args->{}".format(
-                        d,
-                        f,
-                        saveargs
-                    ))
-                    cursor.execute(
-                        self._get_savediarydata_sql(),
-                        saveargs
-                    )
-
-            self.connection.commit()
-            print('All diary data saved!')
-            self.isSavingDiaryData = False
-        except Exception as e:
-            print(f"ERROR: {e}")
-            self.isSavingDiaryData = False
 
     def __addEmptyRecord(self):
         querydata = []
@@ -231,7 +146,8 @@ class MariaDBAdapter(Adapter):
                 field_id = self.fieldDict[field]
                 querydata.append((device_id, field_id, 0))
 
-        self.connection.cursor().executemany(
+        cursor = self.connection.cursor()
+        cursor.executemany(
             self._get_empty_saverecord_sql(),
             querydata
         )
