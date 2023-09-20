@@ -122,7 +122,8 @@ class MariaDBAdapter(Adapter):
                 self._get_saverecord_sql(),
                 querydata
             )
-            self.connection.commit()
+
+        self.connection.commit()
 
     def __syncDiary(self, datestamp):
         sql = "SELECT id FROM diary where datestamp = '{}'".format(datestamp)
