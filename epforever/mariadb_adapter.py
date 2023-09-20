@@ -85,7 +85,6 @@ class MariaDBAdapter(Adapter):
         cursor = self.connection.cursor()
 
         if not off:
-            self.__syncDiary(record[0].get('datestamp'))
             print("saving ...")
             self.isoff = False
         else:
@@ -93,6 +92,8 @@ class MariaDBAdapter(Adapter):
             if not self.isoff:
                 print("saving last empty record ...")
                 self.__addEmptyRecord()
+                print("creating diary stamp for today...")
+                self.__syncDiary(record[0].get('datestamp'))
                 self.isoff = True
 
         for r in record:
