@@ -4,13 +4,17 @@
 This script must be run via a cron job
 after all devices are off
 """
-
+import os
+import sys
 from ast import literal_eval
 
 import MySQLdb
 from dotenv import dotenv_values
 
-dconfig = dotenv_values(dotenv_path=".env")
+script_directory = os.path.dirname(os.path.abspath(sys.argv[0]))
+dotenv_path = os.path.join(script_directory, '.env')
+dconfig = dotenv_values(dotenv_path=dotenv_path)
+
 connection = MySQLdb.connect(
     user=dconfig.get('DB_USER'),
     password=dconfig.get('DB_PWD'),

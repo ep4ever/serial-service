@@ -16,7 +16,6 @@ class MariaDBAdapter(Adapter):
         self.deviceDict: dict = {}
         self.fieldDict: dict = {}
         self.dashboardDict: dict = {}
-        self.dashboardDict: dict = {}
         self.isSavingDiaryData: bool = False
 
     def loadConfig(self):
