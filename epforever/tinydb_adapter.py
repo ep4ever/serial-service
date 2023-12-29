@@ -17,7 +17,7 @@ class TinyDBAdapter(Adapter):
     db_name: str
     nightenv_filepath: str
 
-    def loadConfig(self):
+    def load_config(self):
         lconfig: str = str(self.config.get('MAIN_CONFIG_PATH'))
         if not os.path.isfile(lconfig):
             raise AdapterError(
@@ -68,33 +68,32 @@ class TinyDBAdapter(Adapter):
 
         return True
 
-    def saveRecord(self, record: dict, off: bool = False):
-        if not off:
-            if self.db_name != datetime.today().strftime("%Y-%m-%d") + ".json":
-                self.init()
+    def save_record(self, records: dict):
+        if self.db_name != datetime.today().strftime("%Y-%m-%d") + ".json":
+            self.init()
 
-            self.db.insert_multiple(record)
-        else:
-            if not self.isoff:
-                print("saving last empty record ...")
-                self.__addEmptyRecord()
-                self.isoff = True
+        self.db.insert_multiple(records)
 
-            with open(self.nightenv_filepath, "w") as f:
-                lines = []
-                for r in record:
-                    device = r.get('device')
-                    for data in r.get('data'):
-                        field = data.get('field')
-                        value = data.get('value')
-                        if field is None or value is None or device is None:
-                            continue
+    def save_empty_record(self):
+        print("saving last empty record ...")
+        self.__addEmptyRecord()
 
-                        line = '_'.join([device, field])
-                        lines.append("{}={}\n".format(line, value))
+    def save_offline_record(self, records: list):
+        with open(self.nightenv_filepath, "w") as f:
+            lines = []
+            for r in records:
+                device = r.get('device')
+                for data in r.get('data'):
+                    field = data.get('field')
+                    value = data.get('value')
+                    if field is None or value is None or device is None:
+                        continue
 
-                f.writelines(lines)
-                f.close()
+                    line = '_'.join([device, field])
+                    lines.append("{}={}\n".format(line, value))
+
+            f.writelines(lines)
+            f.close()
 
     def __addEmptyRecord(self):
         localtime = time.localtime()

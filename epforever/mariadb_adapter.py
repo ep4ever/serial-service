@@ -1,4 +1,5 @@
 from ast import literal_eval
+import time
 from typing import cast
 
 import MySQLdb
@@ -18,7 +19,7 @@ class MariaDBAdapter(Adapter):
         self.dashboardDict: dict = {}
         self.isSavingDiaryData: bool = False
 
-    def loadConfig(self):
+    def load_config(self):
         self.init()
 
         cursor = self.connection.cursor()
@@ -79,51 +80,74 @@ class MariaDBAdapter(Adapter):
 
         return True
 
-    def saveRecord(self, record: list, off: bool = False):
+    def save_record(self, records: list):
         querydata = []
         cursor = self.connection.cursor()
 
-        if not off:
-            print("saving ...")
-            self.isoff = False
-        else:
-            print("saving (all devices are off) ...")
-            if not self.isoff:
-                print("saving last empty record ...")
-                self.__addEmptyRecord()
-                print("creating diary stamp for today...")
-                self.__syncDiary(record[0].get('datestamp'))
-                self.isoff = True
-
-        for r in record:
+        print("saving ...")
+        for r in records:
             device_id = self.deviceDict[r.get('device')]
             datestamp = "{} {}".format(
                 r.get('datestamp'),
                 r.get('timestamp')
             )
             datas: list = cast(list, r.get("data"))
+
             for data in datas:
                 field_id = self.fieldDict[data.get('field')]
                 value = data.get('value')
                 querydata.append((device_id, field_id, datestamp, value))
-                if field_id in self.dashboardDict:
-                    cursor.execute(
-                        self._get_update_dashboard_sql(),
-                        (
-                            value,
-                            self.dashboardDict[field_id],
-                            field_id,
-                            device_id
-                        )
-                    )
+                self.__add_to_dashboard(
+                    cursor=cursor,
+                    device_id=device_id,
+                    field_id=field_id,
+                    value=value
+                )
 
-        if not off:
-            cursor.executemany(
-                self._get_saverecord_sql(),
-                querydata
-            )
+        cursor.executemany(
+            self._get_saverecord_sql(),
+            querydata
+        )
 
         self.connection.commit()
+
+    def save_empty_record(self):
+        self.__addEmptyRecord()
+        print("creating diary stamp for today...")
+        datestamp = time.strftime("%Y-%m-%d", time.localtime())
+        self.__syncDiary(datestamp)
+
+    def save_offline_record(self, records: list):
+        print("Saving offline records...")
+        cursor = self.connection.cursor()
+        for r in records:
+            device_id = self.deviceDict[r.get('device')]
+            datas: list = cast(list, r.get("data"))
+            for data in datas:
+                field_id = self.fieldDict[data.get('field')]
+                value = data.get('value')
+                self.__add_to_dashboard(
+                    cursor=cursor,
+                    device_id=device_id,
+                    field_id=field_id,
+                    value=value
+                )
+
+        self.connection.commit()
+
+    def __add_to_dashboard(self, cursor, device_id, field_id, value):
+        if field_id not in self.dashboardDict:
+            return
+
+        cursor.execute(
+            self._get_update_dashboard_sql(),
+            (
+                value,
+                self.dashboardDict[field_id],
+                field_id,
+                device_id
+            )
+        )
 
     def __syncDiary(self, datestamp):
         sql = "SELECT id FROM diary where datestamp = '{}'".format(datestamp)

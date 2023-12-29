@@ -20,7 +20,9 @@ class EpforEverApp():
         }
         self.runnable: bool = False
 
-        self.adapter.loadConfig()
+        self.all_devices_off = False
+
+        self.adapter.load_config()
 
         for deviceDef in self.adapter.devices:
             print("creating com from devices {}".format(deviceDef))
@@ -56,16 +58,24 @@ class EpforEverApp():
                 nboff = nboff + 1
 
         alloff = nboff == len(self.devices)
-        self.adapter.saveRecord(
-            record=records,
-            off=alloff
-        )
+        if not alloff:
+            self.adapter.save_record(
+                records=records,
+                off=alloff
+            )
+            self.all_devices_off = False
+        elif not self.all_devices_off:
+            self.adapter.save_empty_record()
+            self.all_devices_off = True
+        else:
+            self.adapter.save_offline_record(records=records)
 
         if (self.p_index > 3):
             self.p_index = 0
 
         print(f"{self.proc_char[self.p_index]}", end="")
         print("\r", end="")
+
         self.p_index += 1
 
     def __canrun(self) -> bool:
