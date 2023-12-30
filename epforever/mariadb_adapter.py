@@ -1,5 +1,5 @@
 import time
-from typing import cast
+from typing import List, cast
 
 import MySQLdb
 from MySQLdb.connections import Connection
@@ -24,39 +24,10 @@ class MariaDBAdapter(Adapter):
         self.init()
 
         cursor = self.connection.cursor()
-        cursor.execute('SELECT id, name, port FROM device')
-        devices = cursor.fetchall()
-        for device in devices:
-            inst = DeviceInstrument(
-                id=device[0],
-                name=device[1],
-                port=device[2],
-            )
-            self.devices.append(inst)
-            self.deviceDict[device[1]] = device[0]
 
-        cursor.execute('''
-            SELECT id, label, name, category, registeraddr FROM field
-        ''')
-        fields = cursor.fetchall()
-        for field in fields:
-            register = Register(id=field[0], fieldname=field[2])
-            if field[3] == 'simple':
-                register.set_definition(
-                    kind='simple',
-                    value=field[4]
-                )
-            else:
-                data = tuple(field[4].split('|'))
-                register.set_definition(
-                    kind='lowhigh',
-                    lsb=data[0],
-                    msb=data[1]
-                )
-            for a in self.devices:
-                a.registers.append(register)
-
-            self.fieldDict[field[2]] = field[0]
+        self.devices = self.__build_device_list_from_db(
+            cursor=cursor,
+        )
 
         cursor.execute(
             'SELECT DISTINCT identifier, field_id FROM dashboard'
@@ -110,10 +81,10 @@ class MariaDBAdapter(Adapter):
         self.connection.commit()
 
     def save_empty_record(self):
-        self.__addEmptyRecord()
+        self.__add_empty_record()
         print("creating diary stamp for today...")
         datestamp = time.strftime("%Y-%m-%d", time.localtime())
-        self.__syncDiary(datestamp)
+        self.__sync_diary(datestamp)
 
     def save_offline_record(self, records: list):
         print("Saving offline records...")
@@ -133,6 +104,56 @@ class MariaDBAdapter(Adapter):
 
         self.connection.commit()
 
+    def __build_device_list_from_db(
+        self,
+        cursor
+    ) -> List[DeviceInstrument]:
+
+        register_list: List[Register] = self.__build_register_list_from_db(
+            cursor
+        )
+
+        device_list: List[DeviceInstrument] = []
+        cursor.execute('SELECT id, name, port FROM device')
+        devices = cursor.fetchall()
+        for device in devices:
+            inst = DeviceInstrument(
+                id=device[0],
+                name=device[1],
+                port=device[2],
+            )
+            inst.registers = register_list
+            device_list.append(inst)
+            self.deviceDict[device[1]] = device[0]
+
+        return device_list
+
+    def __build_register_list_from_db(self, cursor) -> List[Register]:
+        register_list: List[Register] = []
+        cursor.execute('''
+            SELECT id, label, name, category, registeraddr FROM field
+        ''')
+        fields = cursor.fetchall()
+
+        for field in fields:
+            register = Register(id=field[0], fieldname=field[2])
+            if field[3] == 'simple':
+                register.set_definition(
+                    kind='simple',
+                    value=field[4]
+                )
+            else:
+                data = tuple(field[4].split('|'))
+                register.set_definition(
+                    kind='lowhigh',
+                    lsb=data[0],
+                    msb=data[1]
+                )
+            register_list.append(register)
+            self.fieldDict[field[2]] = field[0]
+
+        return register_list
+
     def __add_to_dashboard(self, cursor, device_id, field_id, value):
         if field_id not in self.dashboardDict:
             return
@@ -147,7 +168,7 @@ class MariaDBAdapter(Adapter):
             )
         )
 
-    def __syncDiary(self, datestamp):
+    def __sync_diary(self, datestamp):
         sql = "SELECT id FROM diary where datestamp = '{}'".format(datestamp)
         cursor = self.connection.cursor()
         cursor.execute(sql)
@@ -160,7 +181,7 @@ class MariaDBAdapter(Adapter):
             )
             self.connection.commit()
 
-    def __addEmptyRecord(self):
+    def __add_empty_record(self):
         querydata = []
 
         for device in self.deviceDict:

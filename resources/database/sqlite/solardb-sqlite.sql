@@ -17,17 +17,9 @@ CREATE TABLE `field` (
 CREATE TABLE `dashboard` (
   `id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `identifier` TEXT NOT NULL,
-  `field_id` INTEGER NOT NULL,
-  `device_id` INTEGER NOT NULL,
-  `value` NUMERIC NOT NULL,
-   FOREIGN KEY (`device_id`)
-	REFERENCES `device` (`id`)
-    ON DELETE CASCADE
-    ON UPDATE NO ACTION,
-   FOREIGN KEY (`field_id`)
-    REFERENCES `field` (`id`)
-    ON DELETE CASCADE
-    ON UPDATE NO ACTION
+  `field_id` INTEGER,
+  `device_id` INTEGER,
+  `value` NUMERIC NOT NULL
 );
 
 CREATE TABLE `data` (
@@ -113,4 +105,9 @@ INSERT INTO dashboard (id,identifier,field_id,device_id,value) VALUES
 	 (10,'temperature',1,1,0.0),
 	 (11,'temperature',1,2,0.0),
 	 (12,'temperature',1,3,0.0);
+
+-- used by another script to query AC voltage data
+INSERT INTO dashboard (id,identifier,field_id,device_id,value) VALUES
+  (13,'hv_active_power',NULL,NULL,0.0),
+  (14,'hv_active_power_etg1',NULL,NULL,0.0);
 */

@@ -18,10 +18,6 @@ class DeviceDefinition:
     :type port: str
     """
 
-    id: int
-    name: str
-    port: str
-
     def __init__(self, id: int, name: str, port: str):
         if id <= 0:
             raise ValueError(
