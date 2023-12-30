@@ -1,4 +1,3 @@
-from ast import literal_eval
 import time
 from typing import cast
 
@@ -6,6 +5,8 @@ import MySQLdb
 from MySQLdb.connections import Connection
 
 from epforever.adapter import Adapter
+from epforever.device_instrument import DeviceInstrument
+from epforever.register import Register
 
 
 class MariaDBAdapter(Adapter):
@@ -26,39 +27,36 @@ class MariaDBAdapter(Adapter):
         cursor.execute('SELECT id, name, port FROM device')
         devices = cursor.fetchall()
         for device in devices:
-            self.devices.append({
-                'id': device[0],
-                'name': device[1],
-                'port': device[2]
-            })
+            inst = DeviceInstrument(
+                id=device[0],
+                name=device[1],
+                port=device[2],
+            )
+            self.devices.append(inst)
             self.deviceDict[device[1]] = device[0]
 
         cursor.execute('''
             SELECT id, label, name, category, registeraddr FROM field
         ''')
         fields = cursor.fetchall()
-        register = {}
         for field in fields:
-            keyval = field[1]
+            register = Register(id=field[0], fieldname=field[2])
             if field[3] == 'simple':
-                register[keyval] = {
-                    'id': field[0],
-                    'kind': 'simple',
-                    'value': literal_eval(field[4]),
-                    'fieldname': field[2]
-                }
+                register.set_definition(
+                    kind='simple',
+                    value=field[4]
+                )
             else:
                 data = tuple(field[4].split('|'))
-                register[keyval] = {
-                    'id': field[0],
-                    'kind': 'lowhigh',
-                    'lsb': literal_eval(data[0]),
-                    'msb': literal_eval(data[1]),
-                    'fieldname': field[2]
-                }
-            self.fieldDict[field[2]] = field[0]
+                register.set_definition(
+                    kind='lowhigh',
+                    lsb=data[0],
+                    msb=data[1]
+                )
+            for a in self.devices:
+                a.registers.append(register)
 
-        self.register = register
+            self.fieldDict[field[2]] = field[0]
 
         cursor.execute(
             'SELECT DISTINCT identifier, field_id FROM dashboard'

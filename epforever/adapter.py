@@ -1,4 +1,7 @@
 from abc import ABC, abstractmethod
+from typing import List
+
+from epforever.device_instrument import DeviceInstrument
 
 
 class Adapter(ABC):
@@ -9,7 +12,7 @@ class Adapter(ABC):
 
     def __init__(self, config: dict):
         self.config: dict = config
-        self.devices: list = []
+        self.devices: List[DeviceInstrument] = []
         self.register: dict = {}
 
     @abstractmethod

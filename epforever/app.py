@@ -1,9 +1,7 @@
-import sys
 import threading
 import time
 
 from epforever.adapter import Adapter
-from epforever.device import Device
 
 
 class EpforEverApp():
@@ -19,20 +17,8 @@ class EpforEverApp():
             3: "/",
         }
         self.runnable: bool = False
-
         self.all_devices_off = False
-
         self.adapter.load_config()
-
-        for deviceDef in self.adapter.devices:
-            print("creating com from devices {}".format(deviceDef))
-            try:
-                comDevice = Device(deviceDef, self.adapter.register)
-                self.devices.append(comDevice)
-            except Exception as e:
-                print("error {}".format(e))
-                sys.exit(1)
-
         self.runnable = self.__canrun()
 
     def run(self):
@@ -50,19 +36,16 @@ class EpforEverApp():
         datestamp = time.strftime("%Y-%m-%d", localtime)
 
         # for each device
-        for device in self.devices:
+        for device in self.adapter.devices:
             record = self.__getrecord(device.name, timestamp, datestamp)
             device.fill(record)
             records.append(record)
-            if not device.has_power():
+            if not device.has_power:
                 nboff = nboff + 1
 
-        alloff = nboff == len(self.devices)
+        alloff = nboff == len(self.adapter.devices)
         if not alloff:
-            self.adapter.save_record(
-                records=records,
-                off=alloff
-            )
+            self.adapter.save_record(records=records)
             self.all_devices_off = False
         elif not self.all_devices_off:
             self.adapter.save_empty_record()
@@ -79,7 +62,7 @@ class EpforEverApp():
         self.p_index += 1
 
     def __canrun(self) -> bool:
-        if len(self.devices) == 0:
+        if len(self.adapter.devices) == 0:
             print(
                 "WARNING: No device configured. Edit the config.yaml file"
             )
