@@ -48,6 +48,15 @@ CREATE TABLE `consumer_data` (
 );
 CREATE INDEX `consumer_data_regkey_IDX` ON `consumer_data`(regkey);
 
+-- solardb.diary definition
+CREATE TABLE `diary` (
+  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `datestamp` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `started_at` DATETIME DEFAULT NULL,
+  `ended_at` DATETIME DEFAULT NULL
+);
+CREATE UNIQUE INDEX `datestamp_UNIQUE_idx` ON `diary`(datestamp);
+
 CREATE TABLE `diary_data` (
   `id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `diary_id` INTEGER NOT NULL,
