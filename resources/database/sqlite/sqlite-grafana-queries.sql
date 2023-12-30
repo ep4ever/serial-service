@@ -128,8 +128,8 @@ FROM
 
 -- production time series (transform: pepare time series > multi-frame time series)
 SELECT
+	unixepoch(DATETIME(z.`date`, '-1 hour')) AS `time`,
 	d.name,
-	UNIXEPOCH(z.`date`) AS `time`,
 	z.value
 FROM
 	data AS z
@@ -138,6 +138,7 @@ JOIN device d ON
 JOIN field f ON
 	f.id = z.field_id
 WHERE
-	DATE(z.date) = CURRENT_DATE
+	DATE(z.`date`) = DATE('now')
 	AND f.name = 'rated_watt'
-order by strftime('%Y-%m-%d', z.`date`) DESC
+order by
+	z.`date` DESC
