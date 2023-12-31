@@ -25,11 +25,13 @@ class DeviceInstrument(DeviceDefinition):
       :type has_error: bool
       :default: False
 
-    :ivar has_power: A boolean indicating if the instrument is powered on.
-      :type has_power: bool
+    :ivar is_off: A boolean indicating if the instrument is powered on.
+      :type is_off: bool
       :default: False
 
     """
+    REG_SIMPLE = "simple"
+    REG_LOWHIGH = "lowhigh"
 
     def __init__(
         self,
@@ -43,7 +45,7 @@ class DeviceInstrument(DeviceDefinition):
         self.registers = registers
         self.instrument = self.__load_instrument()
         self.has_error = False
-        self.has_power = False
+        self.is_off = False
 
     def get_register_by_name(self, name: str) -> Register:
         for register in self.registers:
@@ -52,76 +54,42 @@ class DeviceInstrument(DeviceDefinition):
 
         return None
 
-    def fill(self, record: dict):
+    def measure(self, measurement: dict):
         self.has_error = False
-        self.has_power = self.__check_power_state()
-        if not self.has_power:
+        self.is_off = self.__check_power_state()
+        if self.is_off:
             print(f"Device {self.name} is off!")
-        if self.has_power:
-            # still input current comming from this device
-            try:
-                self.__fillrecord(record)
-            except Exception as e:
-                print("Error on device {}, error {}".format(
-                    self.name,
-                    e
-                ))
-                self.has_error = True
-                self.__fillrecord(
-                    record=record,
-                    empty=True
-                )
-        else:
-            try:
-                self.__fillrecord(
-                    record=record,
-                    withcounter=False
-                )
-            except Exception as e:
-                print("Error on device {}, error {}".format(
-                    self.name,
-                    e
-                ))
-                self.has_error = True
-                self.__fillrecord(
-                    record=record,
-                    empty=True,
-                    withcounter=False
-                )
+            return
 
-    def __fillrecord(
+        # still input current comming from this device
+        try:
+            self.__fill_measure(measurement=measurement)
+        except Exception as e:
+            print("Error on device {}, error {}".format(
+                self.name,
+                e
+            ))
+            self.has_error = True
+            self.__fill_measure(
+                measurement=measurement,
+                empty=True
+            )
+
+    def __fill_measure(
         self,
-        record: dict,
+        measurement: dict,
         empty: bool = False,
-        withcounter: bool = True
     ):
         for register in self.registers:
-            serialvalue = None
-            if empty:
-                serialvalue = 0
-            else:
-                if not withcounter and register.type == 'counter':
-                    continue
+            serialvalue: float = 0.0
+            if not empty:
+                serialvalue = self.__get_serial_value(register=register)
 
-                if register.kind == 'simple':
-                    serialvalue = self.instrument.read_register(
-                        literal_eval(register.value), 2, 4
-                    )
-                if register.kind == 'lowhigh':
-                    lsb = self.instrument.read_register(
-                        literal_eval(register.lsb), 2, 4
-                    )
-                    msb = int(self.instrument.read_register(
-                        literal_eval(register.msb), 2, 4
-                    ))
-                    serialvalue = lsb + (msb << 8)
-
-            if serialvalue is not None:
-                datas: list = cast(list, record.get("data"))
-                datas.append({
-                    "field": register.fieldname,
-                    "value": "{:.2f}".format(serialvalue)
-                })
+            datas: list = cast(list, measurement.get("data"))
+            datas.append({
+                "field": register.fieldname,
+                "value": "{:.2f}".format(serialvalue)
+            })
 
     def __load_instrument(self) -> Instrument:
         try:
@@ -156,10 +124,28 @@ class DeviceInstrument(DeviceDefinition):
             value = self.instrument.read_register(
                 literal_eval(register.value), 2, 4
             )
-            return (value > 0.0)
+            return (value < 0.1)
         except Exception as e:
             print("has_power::Error on device {}. Error: {}".format(
                 self.name,
                 e
             ))
-            return False
+            # is off
+            return True
+
+    def __get_serial_value(self, register: Register) -> float:
+        serialvalue: float = 0.0
+        if register.kind == DeviceInstrument.REG_SIMPLE:
+            serialvalue = self.instrument.read_register(
+                literal_eval(register.value), 2, 4
+            )
+        if register.kind == DeviceInstrument.REG_LOWHIGH:
+            lsb = self.instrument.read_register(
+                literal_eval(register.lsb), 2, 4
+            )
+            msb = int(self.instrument.read_register(
+                literal_eval(register.msb), 2, 4
+            ))
+            serialvalue = lsb + (msb << 8)
+
+        return serialvalue

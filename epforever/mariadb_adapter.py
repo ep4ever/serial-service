@@ -32,9 +32,10 @@ class MariaDBAdapter(Adapter):
         self.cursor.execute(
             'SELECT DISTINCT identifier, field_id FROM dashboard'
         )
-        items = self.cursor.fetchall()
-        for item in items:
-            self.dashboardDict[item[1]] = item[0]
+        rows = self.cursor.fetchall()
+        for row in rows:
+            (identifier, field_id) = row
+            self.dashboardDict[field_id] = identifier
 
         return True
 
@@ -120,26 +121,27 @@ class MariaDBAdapter(Adapter):
     def __build_register_list_from_db(self) -> List[Register]:
         register_list: List[Register] = []
         self.cursor.execute('''
-            SELECT id, label, name, category, registeraddr FROM field
+            SELECT id, name, category, registeraddr FROM field
         ''')
-        fields = self.cursor.fetchall()
+        rows = self.cursor.fetchall()
 
-        for field in fields:
-            register = Register(id=field[0], fieldname=field[2])
-            if field[3] == 'simple':
+        for row in rows:
+            (id, name, category, registeraddr) = row
+            register = Register(id=id, fieldname=name)
+            if category == DeviceInstrument.REG_SIMPLE:
                 register.set_definition(
-                    kind='simple',
-                    value=field[4]
+                    kind=DeviceInstrument.REG_SIMPLE,
+                    value=registeraddr
                 )
             else:
-                data = tuple(field[4].split('|'))
+                data = tuple(registeraddr.split('|'))
                 register.set_definition(
-                    kind='lowhigh',
+                    kind=DeviceInstrument.REG_LOWHIGH,
                     lsb=data[0],
                     msb=data[1]
                 )
             register_list.append(register)
-            self.fieldDict[field[2]] = field[0]
+            self.fieldDict[name] = id
 
         return register_list
 

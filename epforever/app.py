@@ -8,20 +8,11 @@ class EpforEverApp():
 
     def __init__(self, adapter: Adapter):
         self.adapter: Adapter = adapter
-        self.devices: list = list()
         self.p_index: int = 0
-        self.proc_char: dict = {
-            0: "-",
-            1: "\\",
-            2: "|",
-            3: "/",
-        }
+        self.proc_char: tuple = ("-", "\\", "|", "/")
         self.runnable: bool = True
-        self.all_devices_off = False
-
-        if not self.adapter.init():
-            self.runnable = False
-
+        self.all_devices_off: bool = False
+        self.runnable = self.adapter.init()
         self.runnable = self.__canrun()
 
     def run(self):
@@ -40,11 +31,15 @@ class EpforEverApp():
 
         # for each device
         for device in self.adapter.devices:
-            record = self.__getrecord(device.name, timestamp, datestamp)
-            device.fill(record)
-            records.append(record)
-            if not device.has_power:
-                nboff = nboff + 1
+            measurement = {
+                "device": device.name,
+                "timestamp": timestamp,
+                "datestamp": datestamp,
+                "data": []
+            }
+            device.measure(measurement=measurement)
+            records.append(measurement)
+            nboff += int(device.is_off)
 
         alloff = nboff == len(self.adapter.devices)
         if not alloff:
@@ -75,16 +70,3 @@ class EpforEverApp():
             return False
 
         return True
-
-    def __getrecord(
-        self,
-        name: str,
-        timestamp: str,
-        datestamp: str
-    ):
-        return {
-            "device": name,
-            "timestamp": timestamp,
-            "datestamp": datestamp,
-            "data": []
-        }

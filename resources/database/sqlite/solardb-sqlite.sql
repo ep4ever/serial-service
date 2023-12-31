@@ -83,10 +83,10 @@ CREATE INDEX `fk_diary_data_device_id_idx` ON `diary_data`(device_id);
 CREATE INDEX `fk_diary_data_field_id_idx`  ON `diary_data`(field_id);
 
 -- data example
-/*
+
 insert into device (name, port) values('3210an', '/dev/ttyXRUSB0');
 insert into device (name, port) values('6420an', '/dev/ttyXRUSB1');
-insert into device (name, port) values('3210an_2', '/dev/ttyCH343USB0');
+insert into device (name, port) values('3210an2', '/dev/ttyCH343USB0');
 
 INSERT INTO field (label,name,category,format,registeraddr,to_dashboard) VALUES
 	 ('temperature_inside_equipment','device_temp','simple','N','0x3111',1),
@@ -119,4 +119,4 @@ INSERT INTO dashboard (id,identifier,field_id,device_id,value) VALUES
 INSERT INTO dashboard (id,identifier,field_id,device_id,value) VALUES
   (13,'hv_active_power',NULL,NULL,0.0),
   (14,'hv_active_power_etg1',NULL,NULL,0.0);
-*/
+
