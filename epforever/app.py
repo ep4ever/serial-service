@@ -16,9 +16,12 @@ class EpforEverApp():
             2: "|",
             3: "/",
         }
-        self.runnable: bool = False
+        self.runnable: bool = True
         self.all_devices_off = False
-        self.adapter.load_config()
+
+        if not self.adapter.init():
+            self.runnable = False
+
         self.runnable = self.__canrun()
 
     def run(self):
@@ -62,15 +65,12 @@ class EpforEverApp():
         self.p_index += 1
 
     def __canrun(self) -> bool:
+        if not self.runnable:
+            return False
+
         if len(self.adapter.devices) == 0:
             print(
                 "WARNING: No device configured. Edit the config.yaml file"
-            )
-            return False
-
-        if not self.adapter.init():
-            print(
-                "WARNING: could not initialize adapter"
             )
             return False
 

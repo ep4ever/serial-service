@@ -1,5 +1,5 @@
 import time
-from typing import List, cast
+from typing import Any, List, cast
 
 import MySQLdb
 from MySQLdb.connections import Connection
@@ -18,40 +18,28 @@ class MariaDBAdapter(Adapter):
         self.deviceDict: dict = {}
         self.fieldDict: dict = {}
         self.dashboardDict: dict = {}
+        self.cursor: Any = None
         self.isSavingDiaryData: bool = False
 
-    def load_config(self):
-        self.init()
-
-        cursor = self.connection.cursor()
-
-        self.devices = self.__build_device_list_from_db(
-            cursor=cursor,
-        )
-
-        cursor.execute(
-            'SELECT DISTINCT identifier, field_id FROM dashboard'
-        )
-        items = cursor.fetchall()
-        for item in items:
-            self.dashboardDict[item[1]] = item[0]
-
-    def init(self):
+    def init(self) -> bool:
         if self.connection is not None:
             return True
 
-        self.connection = MySQLdb.connect(
-            user=self.config.get('DB_USER'),
-            password=self.config.get('DB_PWD'),
-            host=self.config.get('DB_HOST'),
-            database=self.config.get('DB_NAME')
+        self.cursor = self._init_connection()
+
+        self.devices = self.__build_device_list_from_db()
+
+        self.cursor.execute(
+            'SELECT DISTINCT identifier, field_id FROM dashboard'
         )
+        items = self.cursor.fetchall()
+        for item in items:
+            self.dashboardDict[item[1]] = item[0]
 
         return True
 
     def save_record(self, records: list):
         querydata = []
-        cursor = self.connection.cursor()
 
         print("saving ...")
         for r in records:
@@ -67,13 +55,12 @@ class MariaDBAdapter(Adapter):
                 value = data.get('value')
                 querydata.append((device_id, field_id, datestamp, value))
                 self.__add_to_dashboard(
-                    cursor=cursor,
                     device_id=device_id,
                     field_id=field_id,
                     value=value
                 )
 
-        cursor.executemany(
+        self.cursor.executemany(
             self._get_saverecord_sql(),
             querydata
         )
@@ -88,7 +75,6 @@ class MariaDBAdapter(Adapter):
 
     def save_offline_record(self, records: list):
         print("Saving offline records...")
-        cursor = self.connection.cursor()
         for r in records:
             device_id = self.deviceDict[r.get('device')]
             datas: list = cast(list, r.get("data"))
@@ -96,7 +82,6 @@ class MariaDBAdapter(Adapter):
                 field_id = self.fieldDict[data.get('field')]
                 value = data.get('value')
                 self.__add_to_dashboard(
-                    cursor=cursor,
                     device_id=device_id,
                     field_id=field_id,
                     value=value
@@ -104,18 +89,22 @@ class MariaDBAdapter(Adapter):
 
         self.connection.commit()
 
-    def __build_device_list_from_db(
-        self,
-        cursor
-    ) -> List[DeviceInstrument]:
-
-        register_list: List[Register] = self.__build_register_list_from_db(
-            cursor
+    def _init_connection(self) -> Any:
+        self.connection = MySQLdb.connect(
+            user=self.config.get('DB_USER'),
+            password=self.config.get('DB_PWD'),
+            host=self.config.get('DB_HOST'),
+            database=self.config.get('DB_NAME')
         )
+        return self.connection.cursor()
+
+    def __build_device_list_from_db(self) -> List[DeviceInstrument]:
+
+        register_list: List[Register] = self.__build_register_list_from_db()
 
         device_list: List[DeviceInstrument] = []
-        cursor.execute('SELECT id, name, port FROM device')
-        devices = cursor.fetchall()
+        self.cursor.execute('SELECT id, name, port FROM device')
+        devices = self.cursor.fetchall()
         for device in devices:
             inst = DeviceInstrument(
                 id=device[0],
@@ -128,12 +117,12 @@ class MariaDBAdapter(Adapter):
 
         return device_list
 
-    def __build_register_list_from_db(self, cursor) -> List[Register]:
+    def __build_register_list_from_db(self) -> List[Register]:
         register_list: List[Register] = []
-        cursor.execute('''
+        self.cursor.execute('''
             SELECT id, label, name, category, registeraddr FROM field
         ''')
-        fields = cursor.fetchall()
+        fields = self.cursor.fetchall()
 
         for field in fields:
             register = Register(id=field[0], fieldname=field[2])
@@ -154,11 +143,11 @@ class MariaDBAdapter(Adapter):
 
         return register_list
 
-    def __add_to_dashboard(self, cursor, device_id, field_id, value):
+    def __add_to_dashboard(self, device_id, field_id, value):
         if field_id not in self.dashboardDict:
             return
 
-        cursor.execute(
+        self.cursor.execute(
             self._get_update_dashboard_sql(),
             (
                 value,
@@ -170,11 +159,10 @@ class MariaDBAdapter(Adapter):
 
     def __sync_diary(self, datestamp):
         sql = "SELECT id FROM diary where datestamp = '{}'".format(datestamp)
-        cursor = self.connection.cursor()
-        cursor.execute(sql)
-        diary = cursor.fetchone()
+        self.cursor.execute(sql)
+        diary = self.cursor.fetchone()
         if diary is None:
-            cursor.execute(
+            self.cursor.execute(
                 "INSERT INTO diary(datestamp) VALUES('{}')".format(
                     datestamp
                 )
@@ -190,8 +178,7 @@ class MariaDBAdapter(Adapter):
                 field_id = self.fieldDict[field]
                 querydata.append((device_id, field_id, 0))
 
-        cursor = self.connection.cursor()
-        cursor.executemany(
+        self.cursor.executemany(
             self._get_empty_saverecord_sql(),
             querydata
         )

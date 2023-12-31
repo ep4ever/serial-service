@@ -1,24 +1,20 @@
 import sqlite3
+from typing import Any
 
 from epforever.mariadb_adapter import MariaDBAdapter
 
 
 class SqliteDBAdapter(MariaDBAdapter):
-    """
-    override connection settings
-    """
-    def init(self):
-        if self.connection is not None:
-            return True
 
-        dbpath: str = str(self.config.get('DB_PATH'))
+    """
+    override connection initialization
+    """
+    def _init_connection(self) -> Any:
         self.connection: sqlite3.Connection = sqlite3.connect(
-            dbpath,
+            database=str(self.config.get('DB_PATH')),
             check_same_thread=False
         )
-        self.cursor = self.connection.cursor()
-
-        return True
+        return self.connection.cursor()
 
     def _get_update_dashboard_sql(self):
         return """

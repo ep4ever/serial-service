@@ -16,17 +16,7 @@ class Adapter(ABC):
         self.register: dict = {}
 
     @abstractmethod
-    def load_config(self):
-        """
-        Abstract method to be overridden for loading configuration
-        data from the source.
-        """
-        raise NotImplementedError(
-            "Load_config method needs to be implemented."
-        )
-
-    @abstractmethod
-    def init(self):
+    def init(self) -> bool:
         """
         Abstract method to be overriden for initializing connections
         or file handlers, as well as device list and register handling.
