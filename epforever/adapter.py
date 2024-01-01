@@ -52,3 +52,12 @@ class Adapter(ABC):
         raise NotImplementedError(
             "save_offline_record method needs to be implemented."
         )
+
+    @abstractmethod
+    def run_diary_backup(self):
+        """
+        Abstract method to be overridden for saving daily stats.
+        """
+        raise NotImplementedError(
+            "diary_backup method needs to be implemented."
+        )

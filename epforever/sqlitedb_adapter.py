@@ -36,3 +36,51 @@ class SqliteDBAdapter(MariaDBAdapter):
             INSERT INTO data(device_id, field_id, date, value)
             VALUES(?, ?, datetime('now', 'localtime'), ?)
             """
+
+    def _get_last_diary_sql(self):
+        return """
+        SELECT
+            id,
+            strftime('%Y-%m-%d', datestamp)
+        FROM diary ORDER BY id DESC LIMIT 1
+        """
+
+    # TODO: check this one for sqlite!
+    def _get_update_diary_sql(self):
+        return """
+        UPDATE diary SET started_at = (
+            SELECT MIN(time(z.date)) FROM data AS z
+            WHERE z.date >= datetime(?)
+            AND z.date < datetime(?, '+1 day')
+        ), ended_at = (
+            SELECT MAX(time(z.date)) FROM data AS z
+            WHERE z.date >= datetime(?)
+            AND z.date < datetime(?, '+1 day')
+        )
+        WHERE id = ?
+        """
+
+    # TODO: check this one for sqlite!
+    def _get_average_field_value(self):
+        return """
+        SELECT
+            IFNULL(avg(z.value), 0) as avgval,
+            IFNULL(min(z.value), 0) as minval,
+            IFNULL(max(z.value), 0) as maxval
+        FROM data z
+        WHERE z.device_id = ?
+        AND z.field_id  = ?
+        AND z.date >= datetime(?)
+        AND z.date < datetime(?, '+1 day')
+        AND z.value > 0
+        """
+
+    def _get_diary_insert_data_sql(self):
+        return """
+        INSERT INTO diary_data(
+            diary_id, device_id, field_id, avgval, minval, maxval
+        )
+        VALUES(
+            ?, ?, ?, ?, ?, ?
+        )
+        """

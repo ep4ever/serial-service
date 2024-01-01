@@ -19,7 +19,6 @@ class MariaDBAdapter(Adapter):
         self.fieldDict: dict = {}
         self.dashboardDict: dict = {}
         self.cursor: Any = None
-        self.isSavingDiaryData: bool = False
 
     def init(self) -> bool:
         if self.connection is not None:
@@ -90,6 +89,38 @@ class MariaDBAdapter(Adapter):
 
         self.connection.commit()
 
+    def run_diary_backup(self):
+        self.cursor.execute(self._get_last_diary_sql())
+        (diary_id, datestamp) = self.cursor.fetchone()
+
+        print(f"Updating started and ended fields for diary number {diary_id}")
+        self.cursor.execute(
+            self._get_update_diary_sql(),
+            (datestamp, datestamp, datestamp, datestamp, diary_id)
+        )
+        self.connection.commit()
+
+        for d in self.deviceDict:
+            for f in self.fieldDict:
+                field_id = self.fieldDict[f]
+                device_id = self.deviceDict[d]
+
+                self.cursor.execute(
+                    self._get_average_field_value(),
+                    (device_id, field_id, datestamp, datestamp)
+                )
+
+                counters = self.cursor.fetchone()
+                saveargs = (diary_id, device_id, field_id) + counters
+                self.cursor.execute(
+                    self._get_diary_insert_data_sql(),
+                    saveargs
+                )
+            print(f"Device number {d} OK")
+
+        self.connection.commit()
+        print("Diary backup succeeded!")
+
     def _init_connection(self) -> Any:
         self.connection = MySQLdb.connect(
             user=self.config.get('DB_USER'),
@@ -121,12 +152,12 @@ class MariaDBAdapter(Adapter):
     def __build_register_list_from_db(self) -> List[Register]:
         register_list: List[Register] = []
         self.cursor.execute('''
-            SELECT id, name, category, registeraddr FROM field
+            SELECT id, name, category, registeraddr, to_dashboard FROM field
         ''')
         rows = self.cursor.fetchall()
 
         for row in rows:
-            (id, name, category, registeraddr) = row
+            (id, name, category, registeraddr, to_dashboard) = row
             register = Register(id=id, fieldname=name)
             if category == DeviceInstrument.REG_SIMPLE:
                 register.set_definition(
@@ -140,6 +171,10 @@ class MariaDBAdapter(Adapter):
                     lsb=data[0],
                     msb=data[1]
                 )
+
+            if to_dashboard:
+                register.type = 'counter'
+
             register_list.append(register)
             self.fieldDict[name] = id
 
@@ -216,3 +251,48 @@ class MariaDBAdapter(Adapter):
             INSERT INTO data(device_id, field_id, date, value)
             VALUES(%s, %s, NOW(), %s)
             """
+
+    def _get_update_diary_sql(self):
+        return """
+        UPDATE diary SET started_at = (
+            SELECT MIN(time(z.date)) FROM data AS z
+            WHERE z.date >= DATE(?)
+            AND z.date < (DATE(?) + INTERVAL 1 DAY)
+        ), ended_at = (
+            SELECT MAX(time(z.date)) FROM data AS z
+            WHERE z.date >= DATE(?)
+            AND z.date < (DATE(?) + INTERVAL 1 DAY)
+        )
+        WHERE id = ?
+        """
+
+    def _get_average_field_value(self):
+        return """
+        select
+            IFNULL(avg(z.value), 0) as avgval,
+            IFNULL(min(z.value), 0) as minval,
+            IFNULL(max(z.value), 0) as maxval
+        from data z
+        where z.device_id = %s
+        and z.field_id  = %s
+        and z.date >= %s && z.date < (%s + INTERVAL 1 DAY)
+        and z.value > 0
+        """
+
+    def _get_diary_insert_data_sql(self):
+        return """
+        INSERT INTO diary_data(
+            diary_id, device_id, field_id, avgval, minval, maxval
+        )
+        VALUES(
+            %s, %s, %s, %s, %s, %s
+        )
+        """
+
+    def _get_last_diary_sql(self):
+        return """
+        SELECT
+            id,
+            DATE_FORMAT(datestamp, '%Y-%m-%d')
+        FROM diary ORDER BY id DESC LIMIT 1
+        """

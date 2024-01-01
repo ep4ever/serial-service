@@ -70,3 +70,6 @@ class EpforEverApp():
             return False
 
         return True
+
+    def diary_backup(self):
+        self.adapter.run_diary_backup()

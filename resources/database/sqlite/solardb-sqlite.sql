@@ -1,3 +1,17 @@
+-- *************************************************************
+-- EDIT this file data section to match you personal setup
+-- before issuing bellow instructions
+-- *************************************************************
+-- To create database use sqlite3 command line tool:
+-- At the prompt type: .read <full_path_of_sql_statements_script
+-- To see created tables type: .table
+-- Use Ctrl+D to exit the command line tool.
+-- *************************************************************
+-- Start the service in sqlite mode when all devices are off.
+-- On first run it will create an empty set of data that you can
+-- delete by issuing: "delete from data;"
+-- *************************************************************
+
 CREATE TABLE `device` (
   `id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `name` TEXT UNIQUE NOT NULL,
@@ -82,12 +96,17 @@ CREATE INDEX `fk_diary_data_diary_id_idx` ON `diary_data`(diary_id);
 CREATE INDEX `fk_diary_data_device_id_idx` ON `diary_data`(device_id);
 CREATE INDEX `fk_diary_data_field_id_idx`  ON `diary_data`(field_id);
 
--- data example
+-- data content
+-- *************************************************************
+-- ******************* DATA SECTION ****************************
+-- *************************************************************
 
+-- devices
 insert into device (name, port) values('3210an', '/dev/ttyXRUSB0');
 insert into device (name, port) values('6420an', '/dev/ttyXRUSB1');
 insert into device (name, port) values('3210an2', '/dev/ttyCH343USB0');
 
+-- sensors
 INSERT INTO field (label,name,category,format,registeraddr,to_dashboard) VALUES
 	 ('temperature_inside_equipment','device_temp','simple','N','0x3111',1),
 	 ('pv_array_input_voltage','rated_voltage','simple','N','0x3100',0),
@@ -101,6 +120,8 @@ INSERT INTO field (label,name,category,format,registeraddr,to_dashboard) VALUES
 	 ('load_current','load_current','simple','N','0x310D',0),
 	 ('load_power','load_watt','lowhigh','N','0x310E|0x310F',1);
 
+-- sensors by device that should always be reported.
+-- when no energy is produced values are persisted in this table
 INSERT INTO dashboard (id,identifier,field_id,device_id,value) VALUES
 	 (1,'batt_soc',8,1,0.0),
 	 (2,'batt_soc',8,2,0.0),
@@ -115,8 +136,7 @@ INSERT INTO dashboard (id,identifier,field_id,device_id,value) VALUES
 	 (11,'temperature',1,2,0.0),
 	 (12,'temperature',1,3,0.0);
 
--- used by another script to query AC voltage data
+-- additional sensors being modified by an external process
 INSERT INTO dashboard (id,identifier,field_id,device_id,value) VALUES
   (13,'hv_active_power',NULL,NULL,0.0),
   (14,'hv_active_power_etg1',NULL,NULL,0.0);
-

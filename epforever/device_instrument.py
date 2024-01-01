@@ -59,7 +59,6 @@ class DeviceInstrument(DeviceDefinition):
         self.is_off = self.__check_power_state()
         if self.is_off:
             print(f"Device {self.name} is off!")
-            return
 
         # still input current comming from this device
         try:
