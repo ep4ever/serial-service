@@ -11,7 +11,7 @@ class EpforEverApp():
         self.p_index: int = 0
         self.proc_char: tuple = ("-", "\\", "|", "/")
         self.runnable: bool = True
-        self.all_devices_off: bool = False
+        self.all_devices_off: bool = True
         self.runnable = self.adapter.init()
         self.runnable = self.__canrun()
 
