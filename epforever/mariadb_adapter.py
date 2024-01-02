@@ -91,8 +91,12 @@ class MariaDBAdapter(Adapter):
 
     def run_diary_backup(self):
         self.cursor.execute(self._get_last_diary_sql())
-        (diary_id, datestamp) = self.cursor.fetchone()
+        diary_info = self.cursor.fetchone()
+        if diary_info is None:
+            print("latest diary backup already setup, skipping...")
+            return
 
+        (diary_id, datestamp) = diary_info
         print(f"Updating started and ended fields for diary number {diary_id}")
         self.cursor.execute(
             self._get_update_diary_sql(),
@@ -294,5 +298,8 @@ class MariaDBAdapter(Adapter):
         SELECT
             id,
             DATE_FORMAT(datestamp, '%Y-%m-%d')
-        FROM diary ORDER BY id DESC LIMIT 1
+        FROM diary
+        WHERE diary.started_at is NULL
+        AND diary.ended_at is NULL
+        ORDER BY id DESC LIMIT 1
         """

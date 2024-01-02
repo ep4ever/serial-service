@@ -42,7 +42,10 @@ class SqliteDBAdapter(MariaDBAdapter):
         SELECT
             id,
             strftime('%Y-%m-%d', datestamp)
-        FROM diary ORDER BY id DESC LIMIT 1
+        FROM diary
+        WHERE diary.started_at is NULL
+        AND diary.ended_at is NULL
+        ORDER BY id DESC LIMIT 1
         """
 
     # TODO: check this one for sqlite!

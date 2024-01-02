@@ -14,6 +14,7 @@ class EpforEverApp():
         self.all_devices_off: bool = True
         self.runnable = self.adapter.init()
         self.runnable = self.__canrun()
+        self.off_counter = 0
 
     def run(self):
         if not self.runnable:
@@ -45,11 +46,17 @@ class EpforEverApp():
         if not alloff:
             self.adapter.save_record(records=records)
             self.all_devices_off = False
+            self.off_counter = 0
         elif not self.all_devices_off:
             self.adapter.save_empty_record()
             self.all_devices_off = True
         else:
             self.adapter.save_offline_record(records=records)
+            self.off_counter += 1
+
+        if self.off_counter == 40:
+            # we have rich 15 * 40 (10 minuts) time with all devices off
+            self.adapter.run_diary_backup()
 
         if (self.p_index > 3):
             self.p_index = 0
