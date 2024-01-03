@@ -134,6 +134,10 @@ class DeviceInstrument(DeviceDefinition):
 
     def __get_serial_value(self, register: Register) -> float:
         serialvalue: float = 0.0
+
+        if self.is_off and register.type == 'state':
+            return serialvalue
+
         if register.kind == DeviceInstrument.REG_SIMPLE:
             serialvalue = self.instrument.read_register(
                 literal_eval(register.value), 2, 4

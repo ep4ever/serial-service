@@ -29,7 +29,11 @@ class MariaDBAdapter(Adapter):
         self.devices = self.__build_device_list_from_db()
 
         self.cursor.execute(
-            'SELECT DISTINCT identifier, field_id FROM dashboard'
+            """
+            SELECT DISTINCT identifier, field_id
+            FROM dashboard
+            WHERE field_id IS NOT NULL
+            """
         )
         rows = self.cursor.fetchall()
         for row in rows:
