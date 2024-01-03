@@ -3,13 +3,11 @@
 -- before issuing bellow instructions
 -- *************************************************************
 -- To create database use sqlite3 command line tool:
--- At the prompt type: .read <full_path_of_sql_statements_script
+-- At the prompt type: .read $full_path_of_sql_statements_script
 -- To see created tables type: .table
 -- Use Ctrl+D to exit the command line tool.
 -- *************************************************************
--- Start the service in sqlite mode when all devices are off.
--- On first run it will create an empty set of data that you can
--- delete by issuing: "delete from data;"
+-- Start the service in sqlite mode.
 -- *************************************************************
 
 CREATE TABLE `device` (

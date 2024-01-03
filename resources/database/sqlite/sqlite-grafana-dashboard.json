@@ -1,0 +1,1230 @@
+{
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 2,
+    "links": [],
+    "liveNow": false,
+    "panels": [
+      {
+        "datasource": {
+          "type": "frser-sqlite-datasource",
+          "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "watt"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 3,
+          "w": 3,
+          "x": 0,
+          "y": 0
+        },
+        "id": 2,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "10.2.2",
+        "targets": [
+          {
+            "datasource": {
+              "type": "frser-sqlite-datasource",
+              "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+            },
+            "queryText": "select\n\tCAST(((SUM(value) / SUM(CASE WHEN value > 0 THEN 1 ELSE 0 END)) * 100) as int) / 100.0 AS value\nfrom\n\tdashboard d\nwhere\n\td.identifier = 'load'",
+            "queryType": "table",
+            "rawQueryText": "select\n\tCAST(((SUM(value) / SUM(CASE WHEN value > 0 THEN 1 ELSE 0 END)) * 100) as int) / 100.0 AS value\nfrom\n\tdashboard d\nwhere\n\td.identifier = 'load'",
+            "refId": "A",
+            "timeColumns": [
+              "time",
+              "ts"
+            ]
+          }
+        ],
+        "title": "Sortie 12v",
+        "type": "stat"
+      },
+      {
+        "datasource": {
+          "type": "frser-sqlite-datasource",
+          "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+        },
+        "description": "",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "decimals": 2,
+            "mappings": [],
+            "max": 14.6,
+            "min": 12.5,
+            "thresholds": {
+              "mode": "percentage",
+              "steps": [
+                {
+                  "color": "red",
+                  "value": null
+                },
+                {
+                  "color": "super-light-green",
+                  "value": 10
+                },
+                {
+                  "color": "green",
+                  "value": 60
+                },
+                {
+                  "color": "red",
+                  "value": 90
+                }
+              ]
+            },
+            "unit": "volt"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 5,
+          "w": 3,
+          "x": 3,
+          "y": 0
+        },
+        "id": 1,
+        "options": {
+          "minVizHeight": 75,
+          "minVizWidth": 75,
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true
+        },
+        "pluginVersion": "10.2.2",
+        "targets": [
+          {
+            "datasource": {
+              "type": "frser-sqlite-datasource",
+              "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+            },
+            "queryText": "select\n\tcast(((SUM(value) / SUM(CASE WHEN value > 0 THEN 1 ELSE 0 END)) * 100) as int) / 100.0 AS value\nfrom\n\tdashboard d\nwhere\n\td.identifier = 'batt_voltage'",
+            "queryType": "table",
+            "rawQueryText": "select\n\tcast(((SUM(value) / SUM(CASE WHEN value > 0 THEN 1 ELSE 0 END)) * 100) as int) / 100.0 AS value\nfrom\n\tdashboard d\nwhere\n\td.identifier = 'batt_voltage'",
+            "refId": "A",
+            "timeColumns": [
+              "time",
+              "ts"
+            ]
+          }
+        ],
+        "title": "Voltage batterie",
+        "type": "gauge"
+      },
+      {
+        "datasource": {
+          "type": "frser-sqlite-datasource",
+          "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "decimals": 1,
+            "mappings": [],
+            "max": 1000,
+            "min": 0,
+            "thresholds": {
+              "mode": "percentage",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 900
+                }
+              ]
+            },
+            "unit": "watt"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 5,
+          "w": 3,
+          "x": 6,
+          "y": 0
+        },
+        "id": 5,
+        "options": {
+          "minVizHeight": 75,
+          "minVizWidth": 75,
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true
+        },
+        "pluginVersion": "10.2.2",
+        "targets": [
+          {
+            "datasource": {
+              "type": "frser-sqlite-datasource",
+              "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+            },
+            "queryText": "WITH mysel (device,\nvalue) AS (\nSELECT\n\tdevice.name,\n\tdata.value\nFROM\n\tdata\nJOIN device ON\n\tdevice.id = data.device_id\nWHERE\n\tdata.field_id = 7\nORDER BY\n\tdata.id DESC\nLIMIT 3\n)\nSELECT\n\tSUM(mysel.value) AS watts\nFROM\n\tmysel;",
+            "queryType": "table",
+            "rawQueryText": "WITH mysel (device,\nvalue) AS (\nSELECT\n\tdevice.name,\n\tdata.value\nFROM\n\tdata\nJOIN device ON\n\tdevice.id = data.device_id\nWHERE\n\tdata.field_id = 7\nORDER BY\n\tdata.id DESC\nLIMIT 3\n)\nSELECT\n\tSUM(mysel.value) AS watts\nFROM\n\tmysel;",
+            "refId": "A",
+            "timeColumns": [
+              "time",
+              "ts"
+            ]
+          }
+        ],
+        "title": "Entrée solaire",
+        "type": "gauge"
+      },
+      {
+        "datasource": {
+          "type": "frser-sqlite-datasource",
+          "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+        },
+        "description": "",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "percentage",
+              "steps": [
+                {
+                  "color": "light-blue",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 1000
+                }
+              ]
+            },
+            "unit": "watt"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 5,
+          "w": 3,
+          "x": 9,
+          "y": 0
+        },
+        "id": 8,
+        "options": {
+          "minVizHeight": 75,
+          "minVizWidth": 75,
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true
+        },
+        "pluginVersion": "10.2.2",
+        "targets": [
+          {
+            "datasource": {
+              "type": "frser-sqlite-datasource",
+              "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+            },
+            "queryText": "select value from dashboard where identifier = 'hv_active_power'",
+            "queryType": "table",
+            "rawQueryText": "select value from dashboard where identifier = 'hv_active_power'",
+            "refId": "A",
+            "timeColumns": [
+              "time",
+              "ts"
+            ]
+          }
+        ],
+        "title": "RDC 230v",
+        "type": "gauge"
+      },
+      {
+        "datasource": {
+          "type": "frser-sqlite-datasource",
+          "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "percentage",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 1000
+                }
+              ]
+            },
+            "unit": "watt"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 5,
+          "w": 3,
+          "x": 12,
+          "y": 0
+        },
+        "id": 9,
+        "options": {
+          "minVizHeight": 75,
+          "minVizWidth": 75,
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true
+        },
+        "pluginVersion": "10.2.2",
+        "targets": [
+          {
+            "datasource": {
+              "type": "frser-sqlite-datasource",
+              "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+            },
+            "queryText": "select value from dashboard where identifier = 'hv_active_power_etg1'",
+            "queryType": "table",
+            "rawQueryText": "select value from dashboard where identifier = 'hv_active_power_etg1'",
+            "refId": "A",
+            "timeColumns": [
+              "time",
+              "ts"
+            ]
+          }
+        ],
+        "title": "ETG 230v",
+        "type": "gauge"
+      },
+      {
+        "datasource": {
+          "type": "frser-sqlite-datasource",
+          "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+        },
+        "description": "",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                }
+              ]
+            },
+            "unit": "watt"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 2,
+          "w": 4,
+          "x": 15,
+          "y": 0
+        },
+        "id": 12,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "10.2.2",
+        "targets": [
+          {
+            "datasource": {
+              "type": "frser-sqlite-datasource",
+              "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+            },
+            "queryText": "SELECT \n(24 * (julianday(d.ended_at) - JULIANDAY(d.started_at))) * sum(dd.avgval) AS production \nfrom diary_data dd \njoin diary d ON d.id = dd.diary_id \njoin field f ON f.id = dd.field_id \nwhere f.name = 'pv_rated_watt'\nand d.id = (select max(id) from diary)\n",
+            "queryType": "table",
+            "rawQueryText": "SELECT \n(24 * (julianday(d.ended_at) - JULIANDAY(d.started_at))) * sum(dd.avgval) AS production \nfrom diary_data dd \njoin diary d ON d.id = dd.diary_id \njoin field f ON f.id = dd.field_id \nwhere f.name = 'pv_rated_watt'\nand d.id = (select max(id) from diary)\n",
+            "refId": "A",
+            "timeColumns": [
+              "time",
+              "ts"
+            ]
+          }
+        ],
+        "title": "Production dernier jour",
+        "type": "stat"
+      },
+      {
+        "datasource": {
+          "type": "frser-sqlite-datasource",
+          "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+        },
+        "description": "",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 2,
+          "w": 5,
+          "x": 19,
+          "y": 0
+        },
+        "id": 7,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "/.*/",
+            "values": false
+          },
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "10.2.2",
+        "targets": [
+          {
+            "datasource": {
+              "type": "frser-sqlite-datasource",
+              "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+            },
+            "queryText": "select strftime('%H:%M:%S', DATETIME('now', 'localtime')) as value;",
+            "queryType": "table",
+            "rawQueryText": "select strftime('%H:%M:%S', DATETIME('now', 'localtime')) as value;",
+            "refId": "A",
+            "timeColumns": [
+              "time",
+              "ts"
+            ]
+          }
+        ],
+        "title": "Heure",
+        "type": "stat"
+      },
+      {
+        "datasource": {
+          "type": "frser-sqlite-datasource",
+          "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+        },
+        "description": "",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "super-light-yellow",
+                  "value": null
+                }
+              ]
+            },
+            "unit": "watt"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 3,
+          "w": 4,
+          "x": 15,
+          "y": 2
+        },
+        "id": 11,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "10.2.2",
+        "targets": [
+          {
+            "datasource": {
+              "type": "frser-sqlite-datasource",
+              "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+            },
+            "queryText": "WITH dataset AS (\n  SELECT\n    (24 * (julianday(d.ended_at) - JULIANDAY(d.started_at))) * dd.avgval AS production\n  FROM diary_data dd\n  JOIN diary d ON d.id = dd.diary_id\n  JOIN field f ON f.id = dd.field_id\n  WHERE f.name = 'pv_rated_watt'   \n)\nSELECT sum(production) FROM dataset\n",
+            "queryType": "table",
+            "rawQueryText": "WITH dataset AS (\n  SELECT\n    (24 * (julianday(d.ended_at) - JULIANDAY(d.started_at))) * dd.avgval AS production\n  FROM diary_data dd\n  JOIN diary d ON d.id = dd.diary_id\n  JOIN field f ON f.id = dd.field_id\n  WHERE f.name = 'pv_rated_watt'   \n)\nSELECT sum(production) FROM dataset\n",
+            "refId": "A",
+            "timeColumns": [
+              "time",
+              "ts"
+            ]
+          }
+        ],
+        "title": "Production du mois",
+        "type": "stat"
+      },
+      {
+        "datasource": {
+          "type": "frser-sqlite-datasource",
+          "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "decimals": 1,
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 40
+                }
+              ]
+            },
+            "unit": "celsius"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 3,
+          "w": 5,
+          "x": 19,
+          "y": 2
+        },
+        "id": 4,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "10.2.2",
+        "targets": [
+          {
+            "datasource": {
+              "type": "frser-sqlite-datasource",
+              "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+            },
+            "queryText": "select\n\tCAST(((SUM(value) / SUM(CASE WHEN value > 0 THEN 1 ELSE 0 END)) * 100) as int) / 100.0 AS value\nfrom\n\tdashboard d\nwhere\n\td.identifier = 'temperature'",
+            "queryType": "table",
+            "rawQueryText": "select\n\tCAST(((SUM(value) / SUM(CASE WHEN value > 0 THEN 1 ELSE 0 END)) * 100) as int) / 100.0 AS value\nfrom\n\tdashboard d\nwhere\n\td.identifier = 'temperature'",
+            "refId": "A",
+            "timeColumns": [
+              "time",
+              "ts"
+            ]
+          }
+        ],
+        "title": "Temperature",
+        "type": "stat"
+      },
+      {
+        "datasource": {
+          "type": "frser-sqlite-datasource",
+          "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+        },
+        "description": "",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "percentage",
+              "steps": [
+                {
+                  "color": "light-green",
+                  "value": null
+                },
+                {
+                  "color": "semi-dark-red",
+                  "value": 10
+                }
+              ]
+            },
+            "unit": "percentunit"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 2,
+          "w": 3,
+          "x": 0,
+          "y": 3
+        },
+        "id": 3,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "10.2.2",
+        "targets": [
+          {
+            "datasource": {
+              "type": "frser-sqlite-datasource",
+              "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+            },
+            "queryText": "select\n\tCAST(((SUM(value) / SUM(CASE WHEN value > 0 THEN 1 ELSE 0 END)) * 100) as int) / 100.0 AS value\nfrom\n\tdashboard d\nwhere\n\td.identifier = 'batt_soc'",
+            "queryType": "table",
+            "rawQueryText": "select\n\tCAST(((SUM(value) / SUM(CASE WHEN value > 0 THEN 1 ELSE 0 END)) * 100) as int) / 100.0 AS value\nfrom\n\tdashboard d\nwhere\n\td.identifier = 'batt_soc'",
+            "refId": "A",
+            "timeColumns": [
+              "time",
+              "ts"
+            ]
+          }
+        ],
+        "title": "% batterie",
+        "type": "stat"
+      },
+      {
+        "datasource": {
+          "type": "frser-sqlite-datasource",
+          "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "insertNulls": false,
+              "lineInterpolation": "smooth",
+              "lineWidth": 2,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "decimals": 2,
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 800
+                }
+              ]
+            },
+            "unit": "watt"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 5
+        },
+        "id": 6,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "frser-sqlite-datasource",
+              "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+            },
+            "queryText": "SELECT\n\tunixepoch(DATETIME(z.`date`, '-1 hour')) AS `time`,\n\td.name,\n\tz.value\nFROM\n\tdata AS z\nJOIN device d ON\n\td.id = z.device_id\nJOIN field f ON\n\tf.id = z.field_id\nWHERE\n\tDATE(z.`date`) = DATE('now')\n\tAND f.name = 'rated_watt'\norder by\n\tz.`date` DESC\n",
+            "queryType": "table",
+            "rawQueryText": "SELECT\n\tunixepoch(DATETIME(z.`date`, '-1 hour')) AS `time`,\n\td.name,\n\tz.value\nFROM\n\tdata AS z\nJOIN device d ON\n\td.id = z.device_id\nJOIN field f ON\n\tf.id = z.field_id\nWHERE\n\tDATE(z.`date`) = DATE('now')\n\tAND f.name = 'rated_watt'\norder by\n\tz.`date` DESC\n",
+            "refId": "A",
+            "timeColumns": [
+              "time",
+              "ts"
+            ]
+          }
+        ],
+        "title": "Production",
+        "transformations": [
+          {
+            "id": "prepareTimeSeries",
+            "options": {
+              "format": "multi"
+            }
+          }
+        ],
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "frser-sqlite-datasource",
+          "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+        },
+        "description": "",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "fixed"
+            },
+            "custom": {
+              "align": "auto",
+              "cellOptions": {
+                "type": "auto"
+              },
+              "inspect": false
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 600
+                }
+              ]
+            },
+            "unit": "watt"
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "device"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 99
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Highest"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 91
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Average"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 78
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "production"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 109
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 5,
+          "w": 7,
+          "x": 0,
+          "y": 13
+        },
+        "id": 10,
+        "options": {
+          "cellHeight": "sm",
+          "footer": {
+            "countRows": false,
+            "fields": "",
+            "reducer": [
+              "sum"
+            ],
+            "show": false
+          },
+          "showHeader": true,
+          "sortBy": []
+        },
+        "pluginVersion": "10.2.2",
+        "targets": [
+          {
+            "datasource": {
+              "type": "frser-sqlite-datasource",
+              "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+            },
+            "queryText": "SELECT \ndv.name AS device, \ndd.maxval AS Highest, \ndd.avgval As Average,\n(24 * (julianday(d.ended_at) - JULIANDAY(d.started_at))) * dd.avgval AS production \nfrom diary_data dd \njoin diary d ON d.id = dd.diary_id \njoin field f ON f.id = dd.field_id \njoin device dv ON dv.id  = dd.device_id\nwhere f.name = 'pv_rated_watt'\nand d.id = (select max(id) from diary)\nORDER BY dv.name DESC\n",
+            "queryType": "table",
+            "rawQueryText": "SELECT \ndv.name AS device, \ndd.maxval AS Highest, \ndd.avgval As Average,\n(24 * (julianday(d.ended_at) - JULIANDAY(d.started_at))) * dd.avgval AS production \nfrom diary_data dd \njoin diary d ON d.id = dd.diary_id \njoin field f ON f.id = dd.field_id \njoin device dv ON dv.id  = dd.device_id\nwhere f.name = 'pv_rated_watt'\nand d.id = (select max(id) from diary)\nORDER BY dv.name DESC\n",
+            "refId": "A",
+            "timeColumns": [
+              "time",
+              "ts"
+            ]
+          }
+        ],
+        "title": "Statistiques dernier jour",
+        "type": "table"
+      },
+      {
+        "datasource": {
+          "type": "frser-sqlite-datasource",
+          "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {
+              "align": "auto",
+              "cellOptions": {
+                "type": "auto"
+              },
+              "inspect": false
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "watt"
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "device"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 88
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Highest"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 92
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Average"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 107
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "production"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 112
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 5,
+          "w": 8,
+          "x": 7,
+          "y": 13
+        },
+        "id": 13,
+        "options": {
+          "cellHeight": "sm",
+          "footer": {
+            "countRows": false,
+            "fields": "",
+            "reducer": [
+              "sum"
+            ],
+            "show": false
+          },
+          "showHeader": true,
+          "sortBy": []
+        },
+        "pluginVersion": "10.2.2",
+        "targets": [
+          {
+            "datasource": {
+              "type": "frser-sqlite-datasource",
+              "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+            },
+            "queryText": "SELECT \ndv.name AS device, \nmax(dd.maxval) AS Highest, \nmax(dd.avgval) As Average,\n(24 * (julianday(d.ended_at) - JULIANDAY(d.started_at))) * sum(dd.avgval) AS production \nfrom diary_data dd \njoin diary d ON d.id = dd.diary_id \njoin field f ON f.id = dd.field_id \njoin device dv ON dv.id  = dd.device_id\nwhere f.name = 'pv_rated_watt'\nGROUP BY dv.name\nORDER BY d.id, dv.name DESC\n",
+            "queryType": "table",
+            "rawQueryText": "SELECT \ndv.name AS device, \nmax(dd.maxval) AS Highest, \nmax(dd.avgval) As Average,\n(24 * (julianday(d.ended_at) - JULIANDAY(d.started_at))) * sum(dd.avgval) AS production \nfrom diary_data dd \njoin diary d ON d.id = dd.diary_id \njoin field f ON f.id = dd.field_id \njoin device dv ON dv.id  = dd.device_id\nwhere f.name = 'pv_rated_watt'\nGROUP BY dv.name\nORDER BY d.id, dv.name DESC\n",
+            "refId": "A",
+            "timeColumns": [
+              "time",
+              "ts"
+            ]
+          }
+        ],
+        "title": "Statistiques",
+        "type": "table"
+      },
+      {
+        "datasource": {
+          "type": "frser-sqlite-datasource",
+          "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+        },
+        "description": "",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {
+              "align": "auto",
+              "cellOptions": {
+                "type": "auto"
+              },
+              "inspect": false
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Jour"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 120
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Début"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 103
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Fin"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 107
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Production"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 123
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 5,
+          "w": 9,
+          "x": 15,
+          "y": 13
+        },
+        "id": 14,
+        "options": {
+          "cellHeight": "sm",
+          "footer": {
+            "countRows": false,
+            "fields": "",
+            "reducer": [
+              "sum"
+            ],
+            "show": false
+          },
+          "showHeader": true,
+          "sortBy": []
+        },
+        "pluginVersion": "10.2.2",
+        "targets": [
+          {
+            "datasource": {
+              "type": "frser-sqlite-datasource",
+              "uid": "a7faa37e-c9b4-4260-897d-d589a3c97f15"
+            },
+            "queryText": "select \n  strftime('%d/%m/%Y', d.datestamp) As Jour, \n  d.started_at As Début, \n  d.ended_at As Fin,\n  (\n    SELECT\n    (24 * (julianday(d.ended_at) - JULIANDAY(d.started_at))) * SUM(diary_data.avgval)\n    FROM diary_data\n    JOIN field f ON f.id = diary_data.field_id\n    WHERE diary_data.diary_id = d.id\n    AND f.name = 'pv_rated_watt'\n  ) AS Production\n  from diary d\n  order by d.id desc\n  ;",
+            "queryType": "table",
+            "rawQueryText": "select \n  strftime('%d/%m/%Y', d.datestamp) As Jour, \n  d.started_at As Début, \n  d.ended_at As Fin,\n  (\n    SELECT\n    (24 * (julianday(d.ended_at) - JULIANDAY(d.started_at))) * SUM(diary_data.avgval)\n    FROM diary_data\n    JOIN field f ON f.id = diary_data.field_id\n    WHERE diary_data.diary_id = d.id\n    AND f.name = 'pv_rated_watt'\n  ) AS Production\n  from diary d\n  order by d.id desc\n  ;",
+            "refId": "A",
+            "timeColumns": [
+              "time",
+              "ts"
+            ]
+          }
+        ],
+        "title": "Ensoleillement",
+        "type": "table"
+      }
+    ],
+    "refresh": "10s",
+    "schemaVersion": 38,
+    "tags": [],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "solardb-sqlite",
+    "uid": "b7056e30-bc4b-4734-81e0-a46e3f2f576f",
+    "version": 25,
+    "weekStart": ""
+  }
