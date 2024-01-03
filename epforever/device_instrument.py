@@ -60,7 +60,6 @@ class DeviceInstrument(DeviceDefinition):
         if self.is_off:
             print(f"Device {self.name} is off!")
 
-        # still input current comming from this device
         try:
             self.__fill_measure(measurement=measurement)
         except Exception as e:
@@ -80,6 +79,9 @@ class DeviceInstrument(DeviceDefinition):
         empty: bool = False,
     ):
         for register in self.registers:
+            if self.is_off and register.type == 'state':
+                continue
+
             serialvalue: float = 0.0
             if not empty:
                 serialvalue = self.__get_serial_value(register=register)
@@ -134,9 +136,6 @@ class DeviceInstrument(DeviceDefinition):
 
     def __get_serial_value(self, register: Register) -> float:
         serialvalue: float = 0.0
-
-        if self.is_off and register.type == 'state':
-            return serialvalue
 
         if register.kind == DeviceInstrument.REG_SIMPLE:
             serialvalue = self.instrument.read_register(
