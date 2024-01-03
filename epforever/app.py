@@ -12,15 +12,21 @@ class EpforEverApp():
         self.proc_char: tuple = ("-", "\\", "|", "/")
         self.runnable: bool = True
         self.all_devices_off: bool = True
-        self.runnable = self.adapter.init()
-        self.runnable = self.__canrun()
-        self.off_counter = 0
+        self.runnable: bool = self.adapter.init()
+        self.runnable: bool = self.__canrun()
+        self.off_counter: int = 0
+        self.refresh_rate: float = 15.0      # 15 seconds
+        self.diary_backup_delay: int = 1200  # 20 minuts
+        self.auto_diary_backup: bool = bool(self.adapter.config.get(
+            'AUTO_DIARY_BACKUP',
+            1
+        ))
 
     def run(self):
         if not self.runnable:
             return
 
-        threading.Timer(15.0, self.run).start()
+        threading.Timer(self.refresh_rate, self.run).start()
 
         records: list = []
         nboff: int = 0
@@ -52,10 +58,9 @@ class EpforEverApp():
             self.all_devices_off = True
         else:
             self.adapter.save_offline_record(records=records)
-            self.off_counter += 1
+            self.off_counter += self.refresh_rate
 
-        if self.off_counter == 40:
-            # we have rich 15 * 40 (10 minuts) time with all devices off
+        if self.off_counter == self.diary_backup_delay and self.auto_diary_backup:  # noqa: E501
             self.adapter.run_diary_backup()
 
         if (self.p_index > 3):
@@ -65,6 +70,9 @@ class EpforEverApp():
         print("\r", end="")
 
         self.p_index += 1
+
+    def diary_backup(self):
+        self.adapter.run_diary_backup()
 
     def __canrun(self) -> bool:
         if not self.runnable:
@@ -77,6 +85,3 @@ class EpforEverApp():
             return False
 
         return True
-
-    def diary_backup(self):
-        self.adapter.run_diary_backup()

@@ -123,7 +123,7 @@ class DeviceInstrument(DeviceDefinition):
             value = self.instrument.read_register(
                 literal_eval(register.value), 2, 4
             )
-            return (value < 0.1)
+            return (value < 0.01)
         except Exception as e:
             print("has_power::Error on device {}. Error: {}".format(
                 self.name,
