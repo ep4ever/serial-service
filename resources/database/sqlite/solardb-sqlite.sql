@@ -138,3 +138,7 @@ INSERT INTO dashboard (id,identifier,field_id,device_id,value) VALUES
 INSERT INTO dashboard (id,identifier,field_id,device_id,value) VALUES
   (13,'hv_active_power',NULL,NULL,0.0),
   (14,'hv_active_power_etg1',NULL,NULL,0.0);
+
+INSERT INTO dashboard (id,identifier,field_id,device_id,value) VALUES
+  (15,'hv_total_power',NULL,NULL,0.0),
+  (16,'hv_total_power_etg1',NULL,NULL,0.0);
