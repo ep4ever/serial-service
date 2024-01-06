@@ -1,7 +1,7 @@
 from ast import literal_eval
+import logging
 from serial import Serial, SerialException
 from minimalmodbus import Instrument
-
 from typing import List, cast
 from epforever.device_definition import DeviceDefinition
 from epforever.register import Register
@@ -44,6 +44,7 @@ class DeviceInstrument(DeviceDefinition):
     ):
         super().__init__(id, name, port, baudrate, always_on)
 
+        logging.debug(f"Initializing device {name} on port {port}")
         self.registers = registers
         self.instrument = self.__load_instrument()
         self.has_error = False
@@ -61,12 +62,12 @@ class DeviceInstrument(DeviceDefinition):
         self.is_off = self.__check_power_state()
 
         if self.is_off:
-            print(f"Device {self.name} is off!")
+            logging.debug(f"Device {self.name} is off!")
 
         try:
             self.__fill_measure(measurement=measurement)
         except Exception as e:
-            print("Error on device {}, error {}".format(
+            logging.warn("Error on device {}, error {}".format(
                 self.name,
                 e
             ))
@@ -107,7 +108,7 @@ class DeviceInstrument(DeviceDefinition):
             # default is 0.05 s
             s.timeout = 0.5
         except SerialException as e:
-            print("Device: {} connection error: {}".format(
+            logging.warn("Device: {} connection error: {}".format(
                 self,
                 e
             ))
@@ -133,7 +134,7 @@ class DeviceInstrument(DeviceDefinition):
             )
             return (value < 0.01)
         except Exception as e:
-            print("has_power::Error on device {}. Error: {}".format(
+            logging.warn("has_power::Error on device {}. Error: {}".format(
                 self.name,
                 e
             ))

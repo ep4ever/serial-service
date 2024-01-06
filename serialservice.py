@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import argparse
+import logging
 from dotenv import dotenv_values
 from epforever.app import EpforEverApp
 from epforever.mariadb_adapter import MariaDBAdapter
@@ -23,8 +24,17 @@ args = parser.parse_args()
 arguments = vars(args)
 
 if __name__ == '__main__':
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')  # noqa E505
+    console_handler.setFormatter(formatter)
+    logging.getLogger().setLevel(logging.DEBUG)
+    logging.getLogger().addHandler(console_handler)
+
+    logging.debug("reading dotenv configuration file...")
     dconfig = dotenv_values(dotenv_path=".env")
     mode = dconfig.get('MODE', 'tiny')
+    logging.debug(f"We are in {mode} mode! Creating adapter instance...")
     adapter = None
 
     if mode == 'tiny':
@@ -35,12 +45,15 @@ if __name__ == '__main__':
         adapter = SqliteDBAdapter(dconfig)
 
     if adapter is None:
-        print("ERROR: unknown adapter {}".format(adapter))
+        logging.error("ERROR: unknown adapter {}".format(adapter))
         exit(1)
 
+    logging.debug(f"Creating EpforEverApp with adapter for {mode}!")
     app = EpforEverApp(adapter=adapter)
 
     if arguments.get('mode') == 'measurement':
+        logging.debug("Calling run method of app")
         app.run()
     elif arguments.get('mode') == 'diary_backup':
+        logging.debug("Calling diary_backup method of app")
         app.diary_backup()

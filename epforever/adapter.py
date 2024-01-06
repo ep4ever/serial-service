@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
+import logging
 from typing import List
-
 from epforever.device_instrument import DeviceInstrument
 
 
@@ -11,6 +11,8 @@ class Adapter(ABC):
     """
 
     def __init__(self, config: dict):
+
+        logging.debug("In Adapter base class constructor...")
         self.config: dict = config
         self.devices: List[DeviceInstrument] = []
         self.register: dict = {}

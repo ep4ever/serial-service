@@ -1,6 +1,6 @@
+import logging
 import time
 from typing import Any, List, cast
-
 import MySQLdb
 from MySQLdb.connections import Connection
 
@@ -13,19 +13,21 @@ class MariaDBAdapter(Adapter):
 
     def __init__(self, config: dict):
         super().__init__(config)
-
+        logging.debug("In MariaDBAdapter constructor...")
         self.connection: Connection = None  # pyright: ignore
         self.dashboardDict: dict = {}
         self.cursor: Any = None
 
     def init(self) -> bool:
         if self.connection is not None:
+            logging.warn("connection instance has already been initialized")  # noqa E505
             return True
 
         self.cursor = self._init_connection()
 
         self.devices = self.__build_device_list_from_db()
 
+        logging.debug("Creating dashboard dictionary...")
         self.cursor.execute(
             """
             SELECT DISTINCT identifier, field_id
@@ -43,7 +45,6 @@ class MariaDBAdapter(Adapter):
     def save_record(self, records: list):
         querydata = []
 
-        print("saving ...")
         for r in records:
             device = self.get_device_by_name(r.get('device'))
             datestamp = "{} {}".format(
@@ -62,31 +63,49 @@ class MariaDBAdapter(Adapter):
                     value=value
                 )
 
-        self.cursor.executemany(
-            self._get_saverecord_sql(),
-            querydata
-        )
-
-        self.connection.commit()
+        if len(querydata) > 0:
+            logging.debug("saving ...")
+            self.cursor.executemany(
+                self._get_saverecord_sql(),
+                querydata
+            )
+            self.connection.commit()
 
     def save_empty_record(self):
         querydata = []
 
         for device in self.devices:
+            if device.always_on == 1:
+                # do not save empty data to an always on device
+                continue
+
             for field in device.registers:
+                if field.type == 'counter':
+                    # do not save empty record on a counter
+                    continue
                 querydata.append((device.id, field.id, 0))
 
-        self.cursor.executemany(
-            self._get_empty_saverecord_sql(),
-            querydata
-        )
-        self.connection.commit()
+        if len(querydata) > 0:
+            logging.debug("saving empty record...")
+            self.cursor.executemany(
+                self._get_empty_saverecord_sql(),
+                querydata
+            )
+            self.connection.commit()
 
     def save_offline_record(self, records: list):
-        print("Saving offline records...")
+        querydata = []
+
         for r in records:
             device = self.get_device_by_name(r.get('device'))
+            if device.always_on == 1:
+                # do not save offline data from an always on device
+                continue
             datas: list = cast(list, r.get("data"))
+            datestamp = "{} {}".format(
+                r.get('datestamp'),
+                r.get('timestamp')
+            )
             for data in datas:
                 field = device.get_register_by_name(data.get('field'))
                 value = data.get('value')
@@ -95,22 +114,31 @@ class MariaDBAdapter(Adapter):
                     field_id=field.id,
                     value=value
                 )
+                if field.type == 'counter':
+                    # when offline we are only saving counter type fields
+                    querydata.append((device.id, field.id, datestamp, value))
 
-        self.connection.commit()
+        if len(querydata) > 0:
+            logging.debug("Saving offline records...")
+            self.cursor.executemany(
+                self._get_saverecord_sql(),
+                querydata
+            )
+            self.connection.commit()
 
     def run_diary_backup(self):
-        print("creating diary stamp for today...")
+        logging.debug("creating diary stamp for today...")
         datestamp = time.strftime("%Y-%m-%d", time.localtime())
         self.__sync_diary(datestamp)
 
         self.cursor.execute(self._get_last_diary_sql())
         diary_info = self.cursor.fetchone()
         if diary_info is None:
-            print("latest diary backup already setup, skipping...")
+            logging.warn("latest diary backup already setup, skipping...")
             return
 
         (diary_id, datestamp) = diary_info
-        print(f"Updating started and ended fields for diary number {diary_id}")
+        logging.debug(f"Updating started and ended fields for diary number {diary_id}")  # noqa E505
         self.cursor.execute(
             self._get_update_diary_sql(),
             (datestamp, datestamp, datestamp, datestamp, diary_id)
@@ -134,12 +162,13 @@ class MariaDBAdapter(Adapter):
                     self._get_diary_insert_data_sql(),
                     saveargs
                 )
-            print(f"Device number {device.id} OK")
+            logging.debug(f"Device number {device.id} OK")
 
         self.connection.commit()
-        print("Diary backup succeeded!")
+        logging.info("Diary backup succeeded!")
 
     def _init_connection(self) -> Any:
+        logging.debug("Initializing MySQLdb connection...")
         self.connection = MySQLdb.connect(
             user=self.config.get('DB_USER'),
             password=self.config.get('DB_PWD'),
@@ -151,7 +180,7 @@ class MariaDBAdapter(Adapter):
     def __build_device_list_from_db(self) -> List[DeviceInstrument]:
 
         register_list: List[Register] = self.__build_register_list_from_db()
-
+        logging.debug("Reading device list from database...")
         device_list: List[DeviceInstrument] = []
         self.cursor.execute("""
             SELECT id, name, port, baudrate, register_id, always_on FROM device
@@ -175,6 +204,7 @@ class MariaDBAdapter(Adapter):
 
     def __build_register_list_from_db(self) -> List[Register]:
         register_list: List[Register] = []
+        logging.debug("Reading register list from the database...")
         self.cursor.execute("""
             SELECT
                 id,
@@ -212,6 +242,7 @@ class MariaDBAdapter(Adapter):
                 )
 
             if to_dashboard:
+                logging.debug(f"Register {register.fieldname} has been setted to type counter")  # noqa E505
                 register.type = 'counter'
 
             register_list.append(register)
