@@ -2,9 +2,19 @@ from typing import Literal, Union
 
 
 class Register:
-    def __init__(self, id: int, fieldname: str):
+    def __init__(
+        self,
+        id: int,
+        fieldname: str,
+        register_id: int,
+        datatype: str,
+        divider: int
+    ):
         self.id = id
         self.fieldname = fieldname
+        self.register_id = register_id
+        self.datatype = datatype
+        self.divider = divider
         self.kind: Literal['lowhigh', 'simple'] = None
         self.value: Union[str, bytes] = ''
         self.lsb: str = ''

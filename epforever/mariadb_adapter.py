@@ -143,15 +143,21 @@ class MariaDBAdapter(Adapter):
         register_list: List[Register] = self.__build_register_list_from_db()
 
         device_list: List[DeviceInstrument] = []
-        self.cursor.execute('SELECT id, name, port FROM device')
+        self.cursor.execute("""
+            SELECT id, name, port, baudrate, register_id, always_on FROM device
+        """)
         devices = self.cursor.fetchall()
         for device in devices:
             inst = DeviceInstrument(
                 id=device[0],
                 name=device[1],
                 port=device[2],
+                baudrate=device[3],
+                always_on=device[5]
             )
-            inst.registers = register_list
+            inst.registers = list(
+                filter(lambda x: x.register_id == device[4], register_list)
+            )
             device_list.append(inst)
             self.deviceDict[device[1]] = device[0]
 
@@ -159,14 +165,29 @@ class MariaDBAdapter(Adapter):
 
     def __build_register_list_from_db(self) -> List[Register]:
         register_list: List[Register] = []
-        self.cursor.execute('''
-            SELECT id, name, category, registeraddr, to_dashboard FROM field
-        ''')
+        self.cursor.execute("""
+            SELECT
+                id,
+                name,
+                category,
+                registeraddr,
+                to_dashboard,
+                register_id,
+                datatype,
+                divider
+            FROM field
+        """)
         rows = self.cursor.fetchall()
 
         for row in rows:
-            (id, name, category, registeraddr, to_dashboard) = row
-            register = Register(id=id, fieldname=name)
+            (id, name, category, registeraddr, to_dashboard, register_id, datatype, divider) = row  # noqa E501
+            register = Register(
+                id=id,
+                fieldname=name,
+                register_id=register_id,
+                datatype=datatype,
+                divider=divider
+            )
             if category == DeviceInstrument.REG_SIMPLE:
                 register.set_definition(
                     kind=DeviceInstrument.REG_SIMPLE,

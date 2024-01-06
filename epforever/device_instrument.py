@@ -38,9 +38,11 @@ class DeviceInstrument(DeviceDefinition):
         id: int,
         name: str,
         port: str,
+        baudrate: int,
+        always_on: int,
         registers: List[Register] = []
     ):
-        super().__init__(id, name, port)
+        super().__init__(id, name, port, baudrate, always_on)
 
         self.registers = registers
         self.instrument = self.__load_instrument()
@@ -57,6 +59,7 @@ class DeviceInstrument(DeviceDefinition):
     def measure(self, measurement: dict):
         self.has_error = False
         self.is_off = self.__check_power_state()
+
         if self.is_off:
             print(f"Device {self.name} is off!")
 
@@ -100,9 +103,9 @@ class DeviceInstrument(DeviceDefinition):
                 close_port_after_each_call=False,
             )
             s: Serial = cast(Serial, instrument.serial)
-            s.baudrate = 115200
+            s.baudrate = self.baudrate
             # default is 0.05 s
-            s.timeout = 1.2
+            s.timeout = 0.5
         except SerialException as e:
             print("Device: {} connection error: {}".format(
                 self,
@@ -113,6 +116,9 @@ class DeviceInstrument(DeviceDefinition):
         return instrument
 
     def __check_power_state(self):
+        if self.always_on:
+            return False
+
         # discrete value for day / night always return zero
         # so if pv_array_input_current is zero
         # the device does not produce anymore
@@ -136,11 +142,15 @@ class DeviceInstrument(DeviceDefinition):
 
     def __get_serial_value(self, register: Register) -> float:
         serialvalue: float = 0.0
-
         if register.kind == DeviceInstrument.REG_SIMPLE:
-            serialvalue = self.instrument.read_register(
-                literal_eval(register.value), 2, 4
-            )
+            if register.datatype == 'LONG':
+                serialvalue = self.instrument.read_long(
+                    registeraddress=literal_eval(register.value)
+                )/register.divider
+            else:
+                serialvalue = self.instrument.read_register(
+                    literal_eval(register.value), 2, 4
+                )
         if register.kind == DeviceInstrument.REG_LOWHIGH:
             lsb = self.instrument.read_register(
                 literal_eval(register.lsb), 2, 4
@@ -149,5 +159,4 @@ class DeviceInstrument(DeviceDefinition):
                 literal_eval(register.msb), 2, 4
             ))
             serialvalue = lsb + (msb << 8)
-
         return serialvalue
