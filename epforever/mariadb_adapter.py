@@ -15,8 +15,6 @@ class MariaDBAdapter(Adapter):
         super().__init__(config)
 
         self.connection: Connection = None  # pyright: ignore
-        self.deviceDict: dict = {}
-        self.fieldDict: dict = {}
         self.dashboardDict: dict = {}
         self.cursor: Any = None
 
@@ -47,7 +45,7 @@ class MariaDBAdapter(Adapter):
 
         print("saving ...")
         for r in records:
-            device_id = self.deviceDict[r.get('device')]
+            device = self.get_device_by_name(r.get('device'))
             datestamp = "{} {}".format(
                 r.get('datestamp'),
                 r.get('timestamp')
@@ -55,12 +53,12 @@ class MariaDBAdapter(Adapter):
             datas: list = cast(list, r.get("data"))
 
             for data in datas:
-                field_id = self.fieldDict[data.get('field')]
+                field = device.get_register_by_name(data.get('field'))
                 value = data.get('value')
-                querydata.append((device_id, field_id, datestamp, value))
+                querydata.append((device.id, field.id, datestamp, value))
                 self.__add_to_dashboard(
-                    device_id=device_id,
-                    field_id=field_id,
+                    device_id=device.id,
+                    field_id=field.id,
                     value=value
                 )
 
@@ -72,28 +70,39 @@ class MariaDBAdapter(Adapter):
         self.connection.commit()
 
     def save_empty_record(self):
-        self.__add_empty_record()
-        print("creating diary stamp for today...")
-        datestamp = time.strftime("%Y-%m-%d", time.localtime())
-        self.__sync_diary(datestamp)
+        querydata = []
+
+        for device in self.devices:
+            for field in device.registers:
+                querydata.append((device.id, field.id, 0))
+
+        self.cursor.executemany(
+            self._get_empty_saverecord_sql(),
+            querydata
+        )
+        self.connection.commit()
 
     def save_offline_record(self, records: list):
         print("Saving offline records...")
         for r in records:
-            device_id = self.deviceDict[r.get('device')]
+            device = self.get_device_by_name(r.get('device'))
             datas: list = cast(list, r.get("data"))
             for data in datas:
-                field_id = self.fieldDict[data.get('field')]
+                field = device.get_register_by_name(data.get('field'))
                 value = data.get('value')
                 self.__add_to_dashboard(
-                    device_id=device_id,
-                    field_id=field_id,
+                    device_id=device.id,
+                    field_id=field.id,
                     value=value
                 )
 
         self.connection.commit()
 
     def run_diary_backup(self):
+        print("creating diary stamp for today...")
+        datestamp = time.strftime("%Y-%m-%d", time.localtime())
+        self.__sync_diary(datestamp)
+
         self.cursor.execute(self._get_last_diary_sql())
         diary_info = self.cursor.fetchone()
         if diary_info is None:
@@ -108,23 +117,24 @@ class MariaDBAdapter(Adapter):
         )
         self.connection.commit()
 
-        for d in self.deviceDict:
-            for f in self.fieldDict:
-                field_id = self.fieldDict[f]
-                device_id = self.deviceDict[d]
+        for device in self.devices:
+            # skip always on devices for the diary data
+            if device.always_on:
+                continue
 
+            for field in device.registers:
                 self.cursor.execute(
                     self._get_average_field_value(),
-                    (device_id, field_id, datestamp, datestamp)
+                    (device.id, field.id, datestamp, datestamp)
                 )
 
                 counters = self.cursor.fetchone()
-                saveargs = (diary_id, device_id, field_id) + counters
+                saveargs = (diary_id, device.id, field.id) + counters
                 self.cursor.execute(
                     self._get_diary_insert_data_sql(),
                     saveargs
                 )
-            print(f"Device number {d} OK")
+            print(f"Device number {device.id} OK")
 
         self.connection.commit()
         print("Diary backup succeeded!")
@@ -147,19 +157,19 @@ class MariaDBAdapter(Adapter):
             SELECT id, name, port, baudrate, register_id, always_on FROM device
         """)
         devices = self.cursor.fetchall()
-        for device in devices:
+        for row in devices:
+            (id, name, port, baudrate, register_id, always_on) = row
             inst = DeviceInstrument(
-                id=device[0],
-                name=device[1],
-                port=device[2],
-                baudrate=device[3],
-                always_on=device[5]
+                id=id,
+                name=name,
+                port=port,
+                baudrate=baudrate,
+                always_on=always_on
             )
             inst.registers = list(
-                filter(lambda x: x.register_id == device[4], register_list)
+                filter(lambda x: x.register_id == register_id, register_list)
             )
             device_list.append(inst)
-            self.deviceDict[device[1]] = device[0]
 
         return device_list
 
@@ -205,7 +215,6 @@ class MariaDBAdapter(Adapter):
                 register.type = 'counter'
 
             register_list.append(register)
-            self.fieldDict[name] = id
 
         return register_list
 
@@ -234,21 +243,6 @@ class MariaDBAdapter(Adapter):
                 )
             )
             self.connection.commit()
-
-    def __add_empty_record(self):
-        querydata = []
-
-        for device in self.deviceDict:
-            for field in self.fieldDict:
-                device_id = self.deviceDict[device]
-                field_id = self.fieldDict[field]
-                querydata.append((device_id, field_id, 0))
-
-        self.cursor.executemany(
-            self._get_empty_saverecord_sql(),
-            querydata
-        )
-        self.connection.commit()
 
     def _get_update_dashboard_sql(self):
         return """

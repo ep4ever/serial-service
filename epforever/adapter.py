@@ -15,6 +15,13 @@ class Adapter(ABC):
         self.devices: List[DeviceInstrument] = []
         self.register: dict = {}
 
+    def get_device_by_name(self, name: str) -> DeviceInstrument | None:
+        for device in self.devices:
+            if device.name == name:
+                return device
+
+        return None
+
     @abstractmethod
     def init(self) -> bool:
         """

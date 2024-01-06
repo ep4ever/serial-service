@@ -49,7 +49,7 @@ class DeviceInstrument(DeviceDefinition):
         self.has_error = False
         self.is_off = False
 
-    def get_register_by_name(self, name: str) -> Register:
+    def get_register_by_name(self, name: str) -> Register | None:
         for register in self.registers:
             if register.fieldname == name:
                 return register
