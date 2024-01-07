@@ -1,5 +1,4 @@
 import logging
-import time
 from typing import Any, List, cast
 import MySQLdb
 from MySQLdb.connections import Connection
@@ -158,6 +157,18 @@ class MariaDBAdapter(Adapter):
             )
             self.connection.commit()
 
+    def sync_diary(self, datestamp):
+        sql = "SELECT id FROM diary where datestamp = '{}'".format(datestamp)
+        self.cursor.execute(sql)
+        diary = self.cursor.fetchone()
+        if diary is None:
+            self.cursor.execute(
+                "INSERT INTO diary(datestamp) VALUES('{}')".format(
+                    datestamp
+                )
+            )
+            self.connection.commit()
+
     def run_diary_backup(self):
         """
         Creates a new diary stamp and updates the started and ended fields
@@ -165,10 +176,6 @@ class MariaDBAdapter(Adapter):
         It also calculates daily averages for all counter-type registers
         of non-always on devices, and inserts their data into the diary.
         """
-        logging.info("creating diary stamp for today...")
-        datestamp = time.strftime("%Y-%m-%d", time.localtime())
-        self.__sync_diary(datestamp)
-
         self.cursor.execute(self._get_last_diary_sql())
         diary_info = self.cursor.fetchone()
         if diary_info is None:
@@ -189,6 +196,10 @@ class MariaDBAdapter(Adapter):
                 continue
 
             for field in device.registers:
+                # do not save diary data on counter type fields
+                if field.type == 'counter':
+                    continue
+
                 self.cursor.execute(
                     self._get_average_field_value(),
                     (device.id, field.id, datestamp, datestamp)
@@ -300,18 +311,6 @@ class MariaDBAdapter(Adapter):
                 device_id
             )
         )
-
-    def __sync_diary(self, datestamp):
-        sql = "SELECT id FROM diary where datestamp = '{}'".format(datestamp)
-        self.cursor.execute(sql)
-        diary = self.cursor.fetchone()
-        if diary is None:
-            self.cursor.execute(
-                "INSERT INTO diary(datestamp) VALUES('{}')".format(
-                    datestamp
-                )
-            )
-            self.connection.commit()
 
     def _get_update_dashboard_sql(self):
         return """

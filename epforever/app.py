@@ -82,6 +82,8 @@ class EpforEverApp():
         elif not self.all_devices_off:
             self.adapter.save_empty_record()
             self.all_devices_off = True
+            logging.info("creating diary stamp for today...")
+            self.adapter.sync_diary(datestamp)
         else:
             self.adapter.save_offline_record(records=records)
             self.off_counter += self.refresh_rate
