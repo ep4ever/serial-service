@@ -55,10 +55,12 @@ class SqliteDBAdapter(MariaDBAdapter):
             SELECT MIN(time(z.date)) FROM data AS z
             WHERE z.date >= datetime(?)
             AND z.date < datetime(?, '+1 day')
+            AND z.field_id IN (SELECT id FROM field WHERE to_dashboard=0)
         ), ended_at = (
             SELECT MAX(time(z.date)) FROM data AS z
             WHERE z.date >= datetime(?)
             AND z.date < datetime(?, '+1 day')
+            AND z.field_id IN (SELECT id FROM field WHERE to_dashboard=0)
         )
         WHERE id = ?
         """
