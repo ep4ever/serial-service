@@ -12,7 +12,7 @@ class Adapter(ABC):
 
     def __init__(self, config: dict):
 
-        logging.debug("In Adapter base class constructor...")
+        logging.debug('In Adapter base class constructor...')
         self.config: dict = config
         self.devices: List[DeviceInstrument] = []
         self.register: dict = {}

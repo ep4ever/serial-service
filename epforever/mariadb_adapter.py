@@ -8,17 +8,35 @@ from epforever.adapter import Adapter
 from epforever.device_instrument import DeviceInstrument
 from epforever.register import Register
 
+"""
+MariaDBAdapter class for managing data communication with the MariaDB database.
+
+:param config: A dictionary containing configuration information
+for connecting to and interacting with the MariaDB database.
+
+Attributes:
+   connection (Connection): The MariaDB connection object.
+   dashboardDict (dict): A dictionary used to store dashboard data.
+   cursor (Any): The MariaDB cursor object used
+   for executing queries and fetching results.
+"""
+
 
 class MariaDBAdapter(Adapter):
 
     def __init__(self, config: dict):
         super().__init__(config)
-        logging.debug("In MariaDBAdapter constructor...")
+        logging.debug('In MariaDBAdapter constructor...')
         self.connection: Connection = None  # pyright: ignore
         self.dashboardDict: dict = {}
         self.cursor: Any = None
 
     def init(self) -> bool:
+        """
+       Initializes the Adapter object by connecting to the database,
+       fetching essential data.
+       :return: True if initialization was successful, False otherwise.
+       """
         if self.connection is not None:
             logging.warn("connection instance has already been initialized")  # noqa E505
             return True
@@ -43,6 +61,11 @@ class MariaDBAdapter(Adapter):
         return True
 
     def save_record(self, records: list):
+        """
+        Saves the provided records to the database
+        :param records: A list of Record objects containing
+        device information, timestamp, and data.
+        """
         querydata = []
 
         for r in records:
@@ -64,7 +87,7 @@ class MariaDBAdapter(Adapter):
                 )
 
         if len(querydata) > 0:
-            logging.debug("saving ...")
+            logging.info("saving ...")
             self.cursor.executemany(
                 self._get_saverecord_sql(),
                 querydata
@@ -72,6 +95,9 @@ class MariaDBAdapter(Adapter):
             self.connection.commit()
 
     def save_empty_record(self):
+        """
+        Saves an empty record to the database
+        """
         querydata = []
 
         for device in self.devices:
@@ -94,6 +120,12 @@ class MariaDBAdapter(Adapter):
             self.connection.commit()
 
     def save_offline_record(self, records: list):
+        """
+        Saves the provided offline records to the database
+        if they are from devices that don't have always-on status.
+        :param records: A list of Record objects containing
+        device information, timestamp, and data.
+        """
         querydata = []
 
         for r in records:
@@ -127,7 +159,13 @@ class MariaDBAdapter(Adapter):
             self.connection.commit()
 
     def run_diary_backup(self):
-        logging.debug("creating diary stamp for today...")
+        """
+        Creates a new diary stamp and updates the started and ended fields
+        for an existing diary in the database.
+        It also calculates daily averages for all counter-type registers
+        of non-always on devices, and inserts their data into the diary.
+        """
+        logging.info("creating diary stamp for today...")
         datestamp = time.strftime("%Y-%m-%d", time.localtime())
         self.__sync_diary(datestamp)
 
@@ -162,13 +200,13 @@ class MariaDBAdapter(Adapter):
                     self._get_diary_insert_data_sql(),
                     saveargs
                 )
-            logging.debug(f"Device number {device.id} OK")
+            logging.info(f"Device number {device.id} OK")
 
         self.connection.commit()
         logging.info("Diary backup succeeded!")
 
     def _init_connection(self) -> Any:
-        logging.debug("Initializing MySQLdb connection...")
+        logging.info("Initializing MySQLdb connection...")
         self.connection = MySQLdb.connect(
             user=self.config.get('DB_USER'),
             password=self.config.get('DB_PWD'),

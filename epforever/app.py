@@ -5,10 +5,23 @@ from epforever.adapter import Adapter
 
 
 class EpforEverApp():
+    """
+    A class representing the EpforEverApp instance, responsible
+    for interacting with Epifan devices and managing data collection.
+    Initializes the EpforEverApp instance by initializing
+    the Adapter object and registering
+    callbacks to monitor the connected devices.
+
+    :param adapter: An instance of Adapter.
+    """
 
     def __init__(self, adapter: Adapter):
-
-        logging.debug("In EpforEverApp constructor...")
+        """
+       Initialize the EpforEverApp instance with an Adapter object.
+       :param adapter: An instance of Adapter
+       to interact with the devices.
+       """
+        logging.debug('In EpforEverApp constructor...')
         self.adapter: Adapter = adapter
         self.runnable: bool = True
         self.all_devices_off: bool = True
@@ -26,11 +39,21 @@ class EpforEverApp():
         for device in self.adapter.devices:
             if not device.always_on:
                 self.live_device_count += 1
-        logging.debug(f"Number of device that are always on is {self.live_device_count}")  # noqa E505
+        logging.debug(
+            f"Number of device that are always on is {self.live_device_count}"
+        )
 
     def run(self):
+        """
+        Start the EpforEverApp instance, collecting
+        device data and saving records.
+        If all devices are offline, a diary backup will be triggered after the
+        specified delay.
+        """
         if not self.runnable:
-            logging.warn("Instance cannot be run. Missing configuration settings ?")  # noqa E505
+            logging.warn(
+                'Instance cannot be run. Missing configuration settings ?'
+            )
             return
 
         threading.Timer(self.refresh_rate, self.run).start()
@@ -43,6 +66,7 @@ class EpforEverApp():
         timestamp = time.strftime("%H:%M:%S", localtime)
         datestamp = time.strftime("%Y-%m-%d", localtime)
         logging.debug(f"Current time stamp value is {timestamp}")
+
         # get records from devices that are not always on
         records: list = self.__get_device_records(
             timestamp=timestamp,
@@ -74,6 +98,9 @@ class EpforEverApp():
             self.adapter.run_diary_backup()
 
     def diary_backup(self):
+        """
+        Manually trigger a diary backup.
+        """
         self.adapter.run_diary_backup()
 
     def __get_device_records(
@@ -82,6 +109,14 @@ class EpforEverApp():
         datestamp,
         always_on
     ) -> list:
+        """
+        Collect device data and save records.
+
+        :param timestamp: The current time format for the Epifan devices' logs.
+        :param datestamp: The current date format for the Epifan devices' logs.
+        :param always_on: A boolean value specifying whether to collect records
+        from devices that are online.
+        """
         records: list = []
         nboff: int = 0
 
@@ -106,6 +141,10 @@ class EpforEverApp():
         return records
 
     def __canrun(self) -> bool:
+        """
+        Check the EpforEverApp instance's runnability status,
+        returning True if all conditions are met.
+        """
         if not self.runnable:
             return False
 
