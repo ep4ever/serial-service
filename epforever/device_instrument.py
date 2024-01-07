@@ -40,6 +40,7 @@ class DeviceInstrument(DeviceDefinition):
         port: str,
         baudrate: int,
         always_on: int,
+        liveness_field_name: str = '',
         registers: List[Register] = []
     ):
         super().__init__(id, name, port, baudrate, always_on)
@@ -49,6 +50,7 @@ class DeviceInstrument(DeviceDefinition):
         self.instrument = self.__load_instrument()
         self.has_error = False
         self.is_off = False
+        self.liveness_field_name = liveness_field_name
 
     def get_register_by_name(self, name: str) -> Register | None:
         for register in self.registers:
@@ -59,36 +61,21 @@ class DeviceInstrument(DeviceDefinition):
 
     def measure(self, measurement: dict):
         self.has_error = False
-        self.is_off = self.__check_power_state()
+        self.is_off = self.__check_is_off()
 
         if self.is_off:
-            logging.debug(f"Device {self.name} is off!")
+            logging.warn(f"Device {self.name} is off!")
 
-        try:
-            self.__fill_measure(measurement=measurement)
-        except Exception as e:
-            logging.warn("Error on device {}, error {}".format(
-                self.name,
-                e
-            ))
-            self.has_error = True
-            self.__fill_measure(
-                measurement=measurement,
-                empty=True
-            )
-
-    def __fill_measure(
-        self,
-        measurement: dict,
-        empty: bool = False,
-    ):
         for register in self.registers:
-            if self.is_off and register.type == 'state':
-                continue
-
             serialvalue: float = 0.0
-            if not empty:
+            try:
                 serialvalue = self.__get_serial_value(register=register)
+            except Exception as e:
+                self.has_error = True
+                logging.warn(
+                    f"Could not retrieve value for {register.fieldname}"
+                )
+                logging.error(f"Error: {e}")
 
             datas: list = cast(list, measurement.get("data"))
             datas.append({
@@ -116,17 +103,16 @@ class DeviceInstrument(DeviceDefinition):
 
         return instrument
 
-    def __check_power_state(self):
+    def __check_is_off(self):
         if self.always_on:
             return False
 
-        # discrete value for day / night always return zero
-        # so if pv_array_input_current is zero
-        # the device does not produce anymore
-        name = "rated_current"
+        name = self.liveness_field_name
         register: Register = self.get_register_by_name(name)
         if register is None:
-            raise RuntimeError(f"register {name} could not be found")
+            raise RuntimeError(
+                f"__check_is_off: register {name} could not be found"
+            )
 
         try:
             value = self.instrument.read_register(

@@ -39,7 +39,7 @@ class EpforEverApp():
         for device in self.adapter.devices:
             if not device.always_on:
                 self.live_device_count += 1
-        logging.debug(
+        logging.info(
             f"Number of device that are always on is {self.live_device_count}"
         )
 
@@ -59,7 +59,6 @@ class EpforEverApp():
         threading.Timer(self.refresh_rate, self.run).start()
 
         records: list = []
-        self.nb_devices_off = 0
 
         # get timestamps
         localtime = time.localtime()
@@ -76,26 +75,43 @@ class EpforEverApp():
 
         alloff = self.nb_devices_off == self.live_device_count
         if not alloff:
+            # at least one live device is on so
+            # live device that are off contains en
+            # empty record to keep them in time sync
             self.adapter.save_record(records=records)
             self.all_devices_off = False
+            # reset off counter diay backup to zero
             self.off_counter = 0
         elif not self.all_devices_off:
+            # alloff flag is true so add an empty record
+            # to live devices
             self.adapter.save_empty_record()
+            # instance flag to prevent adding another empty
+            # record on the next tick
             self.all_devices_off = True
+            # create an empty diary entry if it does not exists
             logging.info("creating diary stamp for today...")
             self.adapter.sync_diary(datestamp)
         else:
+            # save offline datas from live devices
             self.adapter.save_offline_record(records=records)
+            # increment the off_counter flag
+            # when this flag is equal to diary_backup_delay
+            # the diary is filled with days data (cf. bellow)
             self.off_counter += self.refresh_rate
 
-        # get records for device that are always on
+        # get records for device that are always on (running 24/24)
         records: list = self.__get_device_records(
             timestamp=timestamp,
             datestamp=datestamp,
             always_on=1
         )
+        # and save them
         self.adapter.save_record(records=records)
 
+        # if off counter is equal to diary backup delay
+        # and if auto diary backup is defined to True
+        # runs the diary packup method of the adapter
         if self.off_counter == self.diary_backup_delay and self.auto_diary_backup:  # noqa: E501
             self.adapter.run_diary_backup()
 
@@ -121,6 +137,7 @@ class EpforEverApp():
         """
         records: list = []
         nboff: int = 0
+        self.nb_devices_off = 0
 
         # for each device
         for device in self.adapter.devices:

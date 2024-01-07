@@ -66,9 +66,16 @@ class MariaDBAdapter(Adapter):
         device information, timestamp, and data.
         """
         querydata = []
-
+        scope: str = ''
         for r in records:
             device = self.get_device_by_name(r.get('device'))
+            curr_scope = 'always on devices' if device.always_on else 'live devices'  # noqa E505
+            if scope == '':
+                scope = curr_scope
+            elif scope != curr_scope:
+                logging.warn(
+                    "save_record should not be called with mixed devices type"
+                )
             datestamp = "{} {}".format(
                 r.get('datestamp'),
                 r.get('timestamp')
@@ -86,7 +93,7 @@ class MariaDBAdapter(Adapter):
                 )
 
         if len(querydata) > 0:
-            logging.info("saving ...")
+            logging.info(f"saving {scope}...")
             self.cursor.executemany(
                 self._get_saverecord_sql(),
                 querydata
@@ -232,17 +239,27 @@ class MariaDBAdapter(Adapter):
         logging.debug("Reading device list from database...")
         device_list: List[DeviceInstrument] = []
         self.cursor.execute("""
-            SELECT id, name, port, baudrate, register_id, always_on FROM device
+            SELECT
+                dv.id,
+                dv.name,
+                dv.port,
+                dv.baudrate,
+                dv.register_id,
+                dv.always_on,
+                rg.ref_liveness_field_name
+            FROM device AS dv
+            JOIN register AS rg ON rg.id = dv.register_id
         """)
         devices = self.cursor.fetchall()
         for row in devices:
-            (id, name, port, baudrate, register_id, always_on) = row
+            (id, name, port, baudrate, register_id, always_on, liveness_field_name) = row  # noqa 505
             inst = DeviceInstrument(
                 id=id,
                 name=name,
                 port=port,
                 baudrate=baudrate,
-                always_on=always_on
+                always_on=always_on,
+                liveness_field_name=liveness_field_name
             )
             inst.registers = list(
                 filter(lambda x: x.register_id == register_id, register_list)

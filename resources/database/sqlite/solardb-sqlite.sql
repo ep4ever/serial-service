@@ -12,10 +12,10 @@
 
 CREATE TABLE `device` (
   `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `register_id` INTEGER NOT NULL DEFAULT 1,
   `name` TEXT UNIQUE NOT NULL,
   `port` TEXT UNIQUE NOT NULL,
   `baudrate` INTEGER NOT NULL DEFAULT 115200,
-  `register_id` INTEGER NOT NULL DEFAULT 1,
   `always_on` INTEGER NOT NULL DEFAULT 0,
   FOREIGN KEY (`register_id`)
     REFERENCES `register` (`id`)
@@ -25,7 +25,8 @@ CREATE TABLE `device` (
 
 CREATE TABLE `register` (
   `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `name` TEXT UNIQUE NOT NULL
+  `name` TEXT UNIQUE NOT NULL,
+  `ref_liveness_field_name` TEXT NOT NULL DEFAULT '',
 );
 
 CREATE TABLE `field` (
@@ -142,6 +143,9 @@ INSERT INTO field (label,name,category,format,registeraddr,to_dashboard) VALUES
 	 ('load_voltage','load_voltage','simple','N','0x310C',0),
 	 ('load_current','load_current','simple','N','0x310D',0),
 	 ('load_power','load_watt','lowhigh','N','0x310E|0x310F',1);
+
+-- this is not optimum but the discrete info is not accurate for liveness probe
+UPDATE register SET ref_liveness_field_name='rated_current' WHERE name='epever'
 
 -- sensors for TAC1100 (register 2)
 INSERT INTO field (label,name,category,format,registeraddr,to_dashboard, register_id, datatype, divider) VALUES
