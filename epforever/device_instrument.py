@@ -69,11 +69,21 @@ class DeviceInstrument(DeviceDefinition):
         for register in self.registers:
             serialvalue: float = 0.0
             try:
-                serialvalue = self.__get_serial_value(register=register)
+                if not self.is_off:
+                    # take everything
+                    serialvalue = self.__get_serial_value(register=register)
+                elif register.type == 'counter':
+                    # take only counter type field
+                    serialvalue = self.__get_serial_value(register=register)
+                else:
+                    # just put a debug message to trace state counter skipped
+                    logging.debug(
+                        f"{register.fieldname} is a 'state' register and the device is off. returning zero"  # noqa E505
+                    )
             except Exception as e:
                 self.has_error = True
                 logging.warn(
-                    f"Could not retrieve value for {register.fieldname}"
+                    f"Could not retrieve value for {register.fieldname} on device {self.name}"  # noqa E505
                 )
                 logging.error(f"Error: {e}")
 

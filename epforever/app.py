@@ -40,7 +40,7 @@ class EpforEverApp():
             if not device.always_on:
                 self.live_device_count += 1
         logging.info(
-            f"Number of device that are always on is {self.live_device_count}"
+            f"Device not always on count is: {self.live_device_count}"
         )
 
     def run(self):

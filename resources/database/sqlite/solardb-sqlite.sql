@@ -22,6 +22,7 @@ CREATE TABLE `device` (
     ON DELETE CASCADE
     ON UPDATE NO ACTION
 );
+CREATE INDEX `fk_device_register_id_idx` ON `device`(register_id);
 
 CREATE TABLE `register` (
   `id` INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,14 +46,25 @@ CREATE TABLE `field` (
     ON DELETE CASCADE
     ON UPDATE NO ACTION
 );
+CREATE INDEX `fk_field_register_id_idx` ON `field`(register_id);
 
 CREATE TABLE `dashboard` (
   `id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `identifier` TEXT NOT NULL,
-  `field_id` INTEGER,
-  `device_id` INTEGER,
-  `value` NUMERIC NOT NULL
+  `device_id` INTEGER NOT NULL,
+  `field_id` INTEGER NOT NULL,
+  `value` NUMERIC NOT NULL,
+  FOREIGN KEY (`device_id`)
+    REFERENCES `device` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION,
+   FOREIGN KEY (`field_id`)
+    REFERENCES `field` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION
 );
+CREATE INDEX `fk_dashboard_device_id_idx` ON `dashboard`(device_id);
+CREATE INDEX `fk_dashboard_field_id_idx` ON `dashboard`(field_id);
 
 CREATE TABLE `data` (
   `id` INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -69,16 +81,9 @@ CREATE TABLE `data` (
     ON DELETE CASCADE
     ON UPDATE NO ACTION
 );
-
-CREATE INDEX `data_date_idx` ON `data`(date);
-
-CREATE TABLE `consumer_data` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `regkey` TEXT NOT NULL,
-  `datestamp` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `value` NUMERIC NOT NULL DEFAULT 0
-);
-CREATE INDEX `consumer_data_regkey_IDX` ON `consumer_data`(regkey);
+CREATE INDEX `fk_data_device_id_idx` ON `data`(device_id);
+CREATE INDEX `fk_data_field_id_idx` ON `data`(field_id);
+CREATE INDEX `fk_data_date_idx` ON `data`(date);
 
 -- solardb.diary definition
 CREATE TABLE `diary` (
@@ -87,7 +92,7 @@ CREATE TABLE `diary` (
   `started_at` DATETIME DEFAULT NULL,
   `ended_at` DATETIME DEFAULT NULL
 );
-CREATE UNIQUE INDEX `datestamp_UNIQUE_idx` ON `diary`(datestamp);
+CREATE UNIQUE INDEX `uq_datestamp_UNIQUE_idx` ON `diary`(datestamp);
 
 CREATE TABLE `diary_data` (
   `id` INTEGER PRIMARY KEY AUTOINCREMENT,

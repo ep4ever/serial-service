@@ -157,7 +157,7 @@ class MariaDBAdapter(Adapter):
                     querydata.append((device.id, field.id, datestamp, value))
 
         if len(querydata) > 0:
-            logging.debug("Saving offline records...")
+            logging.info("Saving offline records...")
             self.cursor.executemany(
                 self._get_saverecord_sql(),
                 querydata
