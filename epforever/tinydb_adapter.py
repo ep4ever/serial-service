@@ -8,10 +8,10 @@ from typing import List, cast
 
 from tinydb import TinyDB
 
-from epforever.adapter import Adapter
-from epforever.device_instrument import DeviceInstrument
-from epforever.register import Register
-from epforever.registers import epever
+from adapter import Adapter
+from device_instrument import DeviceInstrument
+from register import Register
+from registers import epever
 
 
 class TinyDBAdapter(Adapter):

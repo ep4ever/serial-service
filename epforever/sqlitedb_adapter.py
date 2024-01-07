@@ -1,7 +1,7 @@
 import sqlite3
 from typing import Any
 
-from epforever.mariadb_adapter import MariaDBAdapter
+from mariadb_adapter import MariaDBAdapter
 
 
 class SqliteDBAdapter(MariaDBAdapter):

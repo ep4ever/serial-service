@@ -15,7 +15,7 @@ python-dotenv = "^0.21.1"
 mysqlclient = "^2.2.0"
 
 [tool.poetry.scripts]
-serial_service = 'epforever.main:start'
+serial_service = 'main:start'
 
 [build-system]
 requires = ["poetry-core"]

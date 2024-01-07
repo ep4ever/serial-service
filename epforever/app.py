@@ -1,7 +1,7 @@
 import logging
 import threading
 import time
-from epforever.adapter import Adapter
+from adapter import Adapter
 
 
 class EpforEverApp():

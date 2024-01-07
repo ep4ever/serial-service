@@ -3,8 +3,8 @@ import logging
 from serial import Serial, SerialException
 from minimalmodbus import Instrument
 from typing import List, cast
-from epforever.device_definition import DeviceDefinition
-from epforever.register import Register
+from device_definition import DeviceDefinition
+from register import Register
 
 
 class DeviceInstrument(DeviceDefinition):

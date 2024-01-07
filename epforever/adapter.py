@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import logging
 from typing import List
-from epforever.device_instrument import DeviceInstrument
+from device_instrument import DeviceInstrument
 
 
 class Adapter(ABC):

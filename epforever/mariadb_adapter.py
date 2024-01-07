@@ -4,9 +4,9 @@ from typing import Any, List, cast
 import MySQLdb
 from MySQLdb.connections import Connection
 
-from epforever.adapter import Adapter
-from epforever.device_instrument import DeviceInstrument
-from epforever.register import Register
+from adapter import Adapter
+from device_instrument import DeviceInstrument
+from register import Register
 
 """
 MariaDBAdapter class for managing data communication with the MariaDB database.
