@@ -20,13 +20,13 @@ CREATE TABLE `device` (
   FOREIGN KEY (`register_id`)
     REFERENCES `register` (`id`)
     ON DELETE CASCADE
-    ON UPDATE NO ACTION,
+    ON UPDATE NO ACTION
 );
 
 CREATE TABLE `register` (
   `id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `name` TEXT UNIQUE NOT NULL,
-  `ref_liveness_field_name` TEXT NOT NULL DEFAULT '',
+  `ref_liveness_field_name` TEXT NOT NULL DEFAULT ''
 );
 
 CREATE TABLE `field` (
@@ -43,7 +43,7 @@ CREATE TABLE `field` (
   FOREIGN KEY (`register_id`)
     REFERENCES `register` (`id`)
     ON DELETE CASCADE
-    ON UPDATE NO ACTION,
+    ON UPDATE NO ACTION
 );
 
 CREATE TABLE `dashboard` (
@@ -145,7 +145,7 @@ INSERT INTO field (label,name,category,format,registeraddr,to_dashboard) VALUES
 	 ('load_power','load_watt','lowhigh','N','0x310E|0x310F',1);
 
 -- this is not optimum but the discrete info is not accurate for liveness probe
-UPDATE register SET ref_liveness_field_name='rated_current' WHERE name='epever'
+UPDATE register SET ref_liveness_field_name='rated_current' WHERE name='epever';
 
 -- sensors for TAC1100 (register 2)
 INSERT INTO field (label,name,category,format,registeraddr,to_dashboard, register_id, datatype, divider) VALUES
@@ -168,7 +168,6 @@ INSERT INTO dashboard (id,identifier,field_id,device_id,value) VALUES
 	 (11,'temperature',1,2,0.0),
 	 (12,'temperature',1,3,0.0),
    (13,'power_active',12,4,0.0),
-	 (14,'total_energy_active',13,4,0.0)
+	 (14,'total_energy_active',13,4,0.0),
    (15,'power_active',12,5,0.0),
-	 (16,'total_energy_active',13,5,0.0)
-   ;
+	 (16,'total_energy_active',13,5,0.0);
