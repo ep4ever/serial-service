@@ -300,14 +300,15 @@ class MariaDBAdapter(Adapter):
                     value=registeraddr
                 )
             else:
-                data = tuple(registeraddr.split('|'))
+                (lsbval, msbval) = tuple(registeraddr.split('|'))
                 register.set_definition(
                     kind=DeviceInstrument.REG_LOWHIGH,
-                    lsb=data[0],
-                    msb=data[1]
+                    lsb=lsbval,
+                    msb=msbval
                 )
 
             if to_dashboard:
+                # force type of field to counter for consistency
                 logging.debug(f"Register {register.fieldname} has been setted to type counter")  # noqa E505
                 register.type = 'counter'
 
