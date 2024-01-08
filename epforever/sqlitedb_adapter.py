@@ -75,9 +75,7 @@ class SqliteDBAdapter(MariaDBAdapter):
         FROM data z
         WHERE z.device_id = ?
         AND z.field_id  = ?
-        AND z.date >= datetime(?)
-        AND z.date < datetime(?, '+1 day')
-        AND z.value > 0
+        AND DATE(z.date) = DATE(?)
         """
 
     def _get_diary_insert_data_sql(self):

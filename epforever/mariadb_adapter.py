@@ -386,7 +386,6 @@ class MariaDBAdapter(Adapter):
         where z.device_id = %s
         and z.field_id  = %s
         and z.date >= %s && z.date < (%s + INTERVAL 1 DAY)
-        and z.value > 0
         """
 
     def _get_diary_insert_data_sql(self):
