@@ -209,7 +209,7 @@ class MariaDBAdapter(Adapter):
 
                 self.cursor.execute(
                     self._get_average_field_value(),
-                    (device.id, field.id, datestamp, datestamp)
+                    (device.id, field.id, datestamp)
                 )
 
                 counters = self.cursor.fetchone()
@@ -386,7 +386,7 @@ class MariaDBAdapter(Adapter):
         from data z
         where z.device_id = %s
         and z.field_id  = %s
-        and z.date >= %s && z.date < (%s + INTERVAL 1 DAY)
+        and DATE(z.date) = %s
         """
 
     def _get_diary_insert_data_sql(self):
