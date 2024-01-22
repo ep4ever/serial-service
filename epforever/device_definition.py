@@ -29,6 +29,20 @@ class DeviceDefinition:
         baudrate: int = 9600,
         always_on: bool = False
     ):
+        """
+        :param id: The unique identifier for this device.
+        This value must be greater than zero.
+        :type id: int
+
+        :param name: The name of this device.
+        This value must be at least six characters long.
+        :type name: str
+
+        :param port: The port to which the device is connected.
+        This value must not be empty.
+        :type port: str
+        """
+
         if id <= 0:
             raise ValueError(
                 "Device Definition's ID must be greater than zero."

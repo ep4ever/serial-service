@@ -10,6 +10,8 @@ class Register:
         datatype: str,
         divider: int
     ):
+        """Register class for storing register data."""
+
         self.id = id
         self.fieldname = fieldname
         self.register_id = register_id
@@ -28,6 +30,8 @@ class Register:
         lsb: str = '',
         msb: str = ''
     ):
+        """Sets the register definition."""
+
         if (kind == 'lowhigh' and not lsb) or (kind == 'lowhigh' and not msb):
             raise ValueError(
                 "For lowhigh kind, both lsb and msb must be provided."

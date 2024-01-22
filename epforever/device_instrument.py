@@ -43,6 +43,11 @@ class DeviceInstrument(DeviceDefinition):
         liveness_field_name: str = '',
         registers: List[Register] = []
     ):
+        """
+        Initialize a new device with the given parameters and registers.
+        """
+
+        self.registers: List[Register] = registers
         super().__init__(id, name, port, baudrate, always_on)
 
         logging.debug(f"Initializing device {name} on port {port}")
@@ -53,6 +58,10 @@ class DeviceInstrument(DeviceDefinition):
         self.liveness_field_name = liveness_field_name
 
     def get_register_by_name(self, name: str) -> Register | None:
+        """
+        Return the register with the given name if
+        it exists in this device's list of registers
+        """
         for register in self.registers:
             if register.fieldname == name:
                 return register
@@ -60,6 +69,10 @@ class DeviceInstrument(DeviceDefinition):
         return None
 
     def measure(self, measurement: dict):
+        """
+        Measure the value of a register on the device and
+        add it to measurement.data.
+        """
         self.has_error = False
         self.is_off = self.__check_is_off()
 
@@ -94,6 +107,10 @@ class DeviceInstrument(DeviceDefinition):
             })
 
     def __load_instrument(self) -> Instrument:
+        """
+        Load the instrument with the given parameters and
+        return it.
+        """
         try:
             instrument = Instrument(
                 port=self.port,
@@ -104,6 +121,7 @@ class DeviceInstrument(DeviceDefinition):
             s.baudrate = self.baudrate
             # default is 0.05 s
             s.timeout = 0.5
+
         except SerialException as e:
             logging.warn("Device: {} connection error: {}".format(
                 self,
@@ -114,6 +132,10 @@ class DeviceInstrument(DeviceDefinition):
         return instrument
 
     def __check_is_off(self):
+        """
+        Check if the device is powered on or not and
+        return true if it is off.
+        """
         if self.always_on:
             return False
 
@@ -138,6 +160,9 @@ class DeviceInstrument(DeviceDefinition):
             return True
 
     def __get_serial_value(self, register: Register) -> float:
+        """
+        Return the value of a register on the device as float.
+        """
         serialvalue: float = 0.0
         if register.kind == DeviceInstrument.REG_SIMPLE:
             if register.datatype == 'LONG':
